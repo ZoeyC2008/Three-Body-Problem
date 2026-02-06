@@ -58,7 +58,7 @@ public class ThreeBodyApplication extends Application{
 
         camera.getTransforms().addAll(
                 new Rotate(-15, Rotate.X_AXIS),
-                new Rotate(-45, Rotate.Y_AXIS),
+                new Rotate(-495, Rotate.Y_AXIS),
                 new Rotate(-7, Rotate.Z_AXIS)    // Turn to face origin
         );
 
