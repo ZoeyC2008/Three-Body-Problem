@@ -3,19 +3,22 @@ package ics4u.threebodyproblem;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Point3D;
-import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
-import javafx.scene.Scene;
+import javafx.geometry.Pos;
+import javafx.scene.*;
+import javafx.scene.transform.*;
+import javafx.scene.image.*;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
+import javafx.scene.paint.*;
 import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
+import javafx.scene.control.*;
+
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Objects;
 
-public class ThreeBodyApplication extends Application{
+public class ThreeBodyApplication extends Application {
     int scale = 100;
     int frameLength = 1250;
     int frameWidth = 750;
@@ -23,19 +26,115 @@ public class ThreeBodyApplication extends Application{
     double gridSize = 700;
     double spacing = 35;
     double lineThickness = 2;
+    Color textColour = Color.rgb(197, 198, 208, 0.3);
+
+    PerspectiveCamera perspectiveCamera = new PerspectiveCamera(true);
+    final double CAMERA_DEFAULT_TRANSLATION_X = 1200;
+    final double CAMERA_DEFAULT_TRANSLATION_Y = -550;
+    final double CAMERA_DEFAULT_TRANSLATION_Z = -1700;
+    final double CAMERA_DEFAULT_ROTATION_X = -15;
+    final double CAMERA_DEFAULT_ROTATION_Y = -45;
+    final double CAMERA_DEFAULT_ROTATION_Z = -7;
+
+    double cameraTranslationX = 0;
+    double cameraTranslationY = 0;
+    double cameraTranslationZ = 0;
+    double cameraRotationX = 0;
+    double cameraRotationY = 0;
+    double cameraRotationZ = -7;
+
+    //camera modes
+    private String cameraMode = "none";
+    private String[] cameraModes = {"none", "pan", "drag"};
+
+    double mouseX;
+    double mouseY;
+
+    //images! I despise you, we'll get back to it eventually
 
     @Override
-    public void start(Stage primaryStage) throws IOException{
+    public void start(Stage primaryStage) throws IOException {
+
+        perspectiveCamera.setFarClip(10000);
+        setCamera(CAMERA_DEFAULT_TRANSLATION_X, CAMERA_DEFAULT_TRANSLATION_Y, CAMERA_DEFAULT_TRANSLATION_Z, CAMERA_DEFAULT_ROTATION_X, CAMERA_DEFAULT_ROTATION_Y, CAMERA_DEFAULT_ROTATION_Z);
+
+        SubScene subScene3D = draw3D();
+        subScene3D.setCamera(perspectiveCamera);
+
+        StackPane hud = draw2D();
+
+        StackPane root = new StackPane(subScene3D, hud);
+
+        root.setOnMousePressed(event -> {
+            mouseX = event.getSceneX();
+            mouseY = event.getSceneY();
+        });
+
+        root.setOnMouseDragged(event -> {
+            double deltaX = event.getSceneX() - mouseX;
+            double deltaY = event.getSceneY() - mouseY;
+            if (cameraMode.equals("pan")) {
+                cameraRotationX = 0;
+                cameraRotationY = 0;
+
+                // Pan: rotate camera angle
+                cameraRotationX += deltaX * 0.001;
+                cameraRotationY += deltaY * 0.001;
+
+
+                //I have no idea why, but adding negatives and rotate x and rotate y makes it stop tweaking out and I have no idea why, lord help me
+                perspectiveCamera.getTransforms().addAll(
+                        new Rotate(-cameraRotationX, Rotate.Y_AXIS),
+                        new Rotate(-cameraRotationY, Rotate.X_AXIS)
+                );
+            } else if (cameraMode.equals("drag")) {
+                System.out.println("Sillies");
+            }
+        });
+
+        Scene scene = new Scene(root, frameLength, frameWidth);
+        primaryStage.setTitle("Three Body Problem");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private StackPane draw2D() {
+        StackPane hud = new StackPane();
+
+        Button panButton = new Button("Pan");
+        Button dragButton = new Button("Drag");
+
+        panButton.setOnMouseClicked(event -> {
+            if (!this.cameraMode.equals("pan")) {
+                this.cameraMode = "pan";
+            } else {
+                this.cameraMode = "none";
+            }
+        });
+
+        dragButton.setOnMouseClicked(event -> {
+            if (!this.cameraMode.equals("drag")) {
+                this.cameraMode = "drag";
+            } else {
+                this.cameraMode = "none";
+            }
+        });
+
+        VBox controls = new VBox(10, panButton, dragButton);
+        controls.setAlignment(Pos.TOP_LEFT);
+        controls.setStyle("-fx-padding: 20;");
+
+        hud.getChildren().add(controls);
+
+        return hud;
+    }
+
+    private SubScene draw3D() {
         Group root = new Group();
 
-
-        Point3D origin = new Point3D((double) frameLength /2, (double) frameWidth /2, 0);
-
-        Color textColour = Color.rgb(197, 198, 208, 0.3);
-
-        Color redPlane = Color.web("#fa8072aa");
-        Color greenPlane = Color.web("#98fb98aa");
-        Color bluePlane = Color.web("#73c2fbaa");
+        Color redPlane = Color.web("#fa8072");
+        Color greenPlane = Color.web("#98fb98");
+        Color bluePlane = Color.web("#73c2fb");
 
         //xy plane
         Group xyPlane = drawPlaneXY(redPlane);
@@ -46,96 +145,87 @@ public class ThreeBodyApplication extends Application{
 
         root.getChildren().addAll(xyPlane, xzPlane, yzPlane);
 
-        Scene scene = new Scene(root, frameLength, frameWidth, true);
+        SubScene scene = new SubScene(root, frameLength, frameWidth, true, SceneAntialiasing.BALANCED);
         scene.setFill(Color.rgb(34, 32, 33));
 
-        PerspectiveCamera camera = new PerspectiveCamera(true);
-        //camera.setFieldOfView(60);
-
-        camera.setTranslateX(1200);
-        camera.setTranslateY(-550);
-        camera.setTranslateZ(-1700);
-
-        camera.getTransforms().addAll(
-                new Rotate(-15, Rotate.X_AXIS),
-                new Rotate(-45, Rotate.Y_AXIS),
-                new Rotate(-7, Rotate.Z_AXIS)    // Turn to face origin
-        );
-
-
-
-        camera.setFarClip(3000);
-
-        scene.setCamera(camera);
-
-        primaryStage.setTitle("Three Body Problem");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        return scene;
     }
 
-    private Group drawPlaneXY(Color lineColor){
+    private void setCamera(double translationX, double translationY, double translationZ, double rotationX, double rotationY, double rotationZ) {
+        perspectiveCamera.setTranslateX(translationX);
+        perspectiveCamera.setTranslateY(translationY);
+        perspectiveCamera.setTranslateZ(translationZ);
+
+        perspectiveCamera.getTransforms().addAll(
+                new Rotate(rotationX, Rotate.X_AXIS),
+                new Rotate(rotationY, Rotate.Y_AXIS),
+                new Rotate(rotationZ, Rotate.Z_AXIS)    // Turn to face origin
+        );
+    }
+
+    private Group drawPlaneXY(Color lineColor) {
         Group plane = new Group();
         PhongMaterial material = new PhongMaterial(lineColor);
 
         // Horizontal lines (along X axis)
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box hLine = new Box(gridSize, lineThickness, lineThickness);
             hLine.setMaterial(material);
-            hLine.setTranslateY(i - gridSize/2);
+            hLine.setTranslateY(i - gridSize / 2);
             plane.getChildren().add(hLine);
         }
 
         // Vertical lines (along Y axis)
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box vLine = new Box(lineThickness, gridSize, lineThickness);
             vLine.setMaterial(material);
-            vLine.setTranslateX(i - gridSize/2);
+            vLine.setTranslateX(i - gridSize / 2);
             plane.getChildren().add(vLine);
         }
 
         return plane;
     }
 
-    private Group drawPlaneXZ(Color lineColor){
+    private Group drawPlaneXZ(Color lineColor) {
         Group plane = new Group();
         PhongMaterial material = new PhongMaterial(lineColor);
 
         // Lines along X axis
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box hLine = new Box(gridSize, lineThickness, lineThickness);
             hLine.setMaterial(material);
-            hLine.setTranslateZ(i - gridSize/2);
+            hLine.setTranslateZ(i - gridSize / 2);
             plane.getChildren().add(hLine);
         }
 
         // Lines along Z axis
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box vLine = new Box(lineThickness, lineThickness, gridSize);
             vLine.setMaterial(material);
-            vLine.setTranslateX(i - gridSize/2);
+            vLine.setTranslateX(i - gridSize / 2);
             plane.getChildren().add(vLine);
         }
 
         return plane;
     }
 
-    private Group drawPlaneYZ(Color lineColor){
+    private Group drawPlaneYZ(Color lineColor) {
         Group plane = new Group();
         PhongMaterial material = new PhongMaterial(lineColor);
 
         // Lines along Y axis
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box hLine = new Box(lineThickness, gridSize, lineThickness);
             hLine.setMaterial(material);
-            hLine.setTranslateZ(i - gridSize/2);
+            hLine.setTranslateZ(i - gridSize / 2);
             plane.getChildren().add(hLine);
         }
 
         // Lines along Z axis
-        for(int i = 0; i <= gridSize; i += spacing) {
+        for (int i = 0; i <= gridSize; i += spacing) {
             Box vLine = new Box(lineThickness, lineThickness, gridSize);
             vLine.setMaterial(material);
-            vLine.setTranslateY(i - gridSize/2);
+            vLine.setTranslateY(i - gridSize / 2);
             plane.getChildren().add(vLine);
         }
 
