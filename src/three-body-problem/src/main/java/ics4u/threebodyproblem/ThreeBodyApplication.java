@@ -29,19 +29,20 @@ public class ThreeBodyApplication extends Application {
     Color textColour = Color.rgb(197, 198, 208, 0.3);
 
     PerspectiveCamera perspectiveCamera = new PerspectiveCamera(true);
-    final double CAMERA_DEFAULT_TRANSLATION_X = 1200;
-    final double CAMERA_DEFAULT_TRANSLATION_Y = -550;
-    final double CAMERA_DEFAULT_TRANSLATION_Z = -1700;
-    final double CAMERA_DEFAULT_ROTATION_X = -15;
-    final double CAMERA_DEFAULT_ROTATION_Y = -45;
-    final double CAMERA_DEFAULT_ROTATION_Z = -7;
+    final double CAMERA_DEFAULT_TRANSLATION_X = 1535;
+    final double CAMERA_DEFAULT_TRANSLATION_Y = -685;
+    final double CAMERA_DEFAULT_TRANSLATION_Z = -675;
+    final double CAMERA_DEFAULT_ROTATION_X = -49.9;
+    final double CAMERA_DEFAULT_ROTATION_Y = -60.4564;
+    final double CAMERA_DEFAULT_ROTATION_Z = -40.7;
 
-    double cameraTranslationX = 0;
-    double cameraTranslationY = 0;
-    double cameraTranslationZ = 0;
+    double cameraTranslationX = 1535;
+    double cameraTranslationY = -685;
+    double cameraTranslationZ = -675;
     double cameraRotationX = 0;
     double cameraRotationY = 0;
-    double cameraRotationZ = -7;
+
+    boolean planeXYVisible = true, planeXZVisible = true, planeYZVisible = true;
 
     //camera modes
     private String cameraMode = "none";
@@ -56,7 +57,8 @@ public class ThreeBodyApplication extends Application {
     public void start(Stage primaryStage) throws IOException {
 
         perspectiveCamera.setFarClip(10000);
-        setCamera(CAMERA_DEFAULT_TRANSLATION_X, CAMERA_DEFAULT_TRANSLATION_Y, CAMERA_DEFAULT_TRANSLATION_Z, CAMERA_DEFAULT_ROTATION_X, CAMERA_DEFAULT_ROTATION_Y, CAMERA_DEFAULT_ROTATION_Z);
+        setDefaultCamera();
+
 
         SubScene subScene3D = draw3D();
         subScene3D.setCamera(perspectiveCamera);
@@ -73,23 +75,48 @@ public class ThreeBodyApplication extends Application {
         root.setOnMouseDragged(event -> {
             double deltaX = event.getSceneX() - mouseX;
             double deltaY = event.getSceneY() - mouseY;
+
             if (cameraMode.equals("pan")) {
                 cameraRotationX = 0;
                 cameraRotationY = 0;
 
-                // Pan: rotate camera angle
-                cameraRotationX += deltaX * 0.001;
-                cameraRotationY += deltaY * 0.001;
+                cameraRotationX += deltaX * 0.002;
+                cameraRotationY -= deltaY * 0.002;
 
 
                 //I have no idea why, but adding negatives and rotate x and rotate y makes it stop tweaking out and I have no idea why, lord help me
                 perspectiveCamera.getTransforms().addAll(
-                        new Rotate(-cameraRotationX, Rotate.Y_AXIS),
-                        new Rotate(-cameraRotationY, Rotate.X_AXIS)
+                        new Rotate(cameraRotationX, Rotate.Y_AXIS),
+                        new Rotate(cameraRotationY, Rotate.X_AXIS)
                 );
+
+
             } else if (cameraMode.equals("drag")) {
-                System.out.println("Sillies");
+                //cameraTranslationX = 0;
+                //cameraTranslationY = 0;
+
+                cameraTranslationX -= deltaX * 0.03;
+                cameraTranslationY -= deltaY * 0.03;
+
+                updateCameraPosition();
             }
+        });
+
+        root.setOnScroll(event -> {
+            double delta = event.getDeltaY();
+            double zoomFactor = 1.05;
+
+            if (delta > 0) {
+                cameraTranslationX *= zoomFactor;
+                cameraTranslationY *= zoomFactor;
+                cameraTranslationZ *= zoomFactor;
+            } else {
+                cameraTranslationX /= zoomFactor;
+                cameraRotationY /= zoomFactor;
+                cameraTranslationZ /= zoomFactor;
+            }
+
+            updateCameraPosition();
         });
 
         Scene scene = new Scene(root, frameLength, frameWidth);
@@ -151,16 +178,24 @@ public class ThreeBodyApplication extends Application {
         return scene;
     }
 
-    private void setCamera(double translationX, double translationY, double translationZ, double rotationX, double rotationY, double rotationZ) {
-        perspectiveCamera.setTranslateX(translationX);
-        perspectiveCamera.setTranslateY(translationY);
-        perspectiveCamera.setTranslateZ(translationZ);
+    private void setDefaultCamera() {
+        perspectiveCamera.setTranslateX(CAMERA_DEFAULT_TRANSLATION_X);
+        perspectiveCamera.setTranslateY(CAMERA_DEFAULT_TRANSLATION_Y);
+        perspectiveCamera.setTranslateZ(CAMERA_DEFAULT_TRANSLATION_Z);
 
         perspectiveCamera.getTransforms().addAll(
-                new Rotate(rotationX, Rotate.X_AXIS),
-                new Rotate(rotationY, Rotate.Y_AXIS),
-                new Rotate(rotationZ, Rotate.Z_AXIS)    // Turn to face origin
+                new Rotate(CAMERA_DEFAULT_ROTATION_X, Rotate.X_AXIS),
+                new Rotate(CAMERA_DEFAULT_ROTATION_Y, Rotate.Y_AXIS),
+                new Rotate(CAMERA_DEFAULT_ROTATION_Z, Rotate.Z_AXIS)    // Turn to face origin
         );
+    }
+
+    private void updateCameraPosition() {
+        perspectiveCamera.setTranslateX(cameraTranslationX);
+        perspectiveCamera.setTranslateY(cameraTranslationY);
+        perspectiveCamera.setTranslateZ(cameraTranslationZ);
+
+        System.out.println("Translations X: " + cameraTranslationX + " | Y: " + cameraTranslationY +  " | Z: " + cameraTranslationZ);
     }
 
     private Group drawPlaneXY(Color lineColor) {
