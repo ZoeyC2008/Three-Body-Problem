@@ -5,6 +5,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.scene.transform.*;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
@@ -26,7 +28,6 @@ public class ThreeBodyApplication extends Application {
     double gridSize = 700;
     double spacing = 35;
     double lineThickness = 2;
-    Color textColour = Color.rgb(197, 198, 208, 0.3);
 
     PerspectiveCamera perspectiveCamera = new PerspectiveCamera(true);
     final double CAMERA_DEFAULT_TRANSLATION_X = 1535;
@@ -50,6 +51,10 @@ public class ThreeBodyApplication extends Application {
 
     double mouseX;
     double mouseY;
+
+    //control panel settings
+    private String controlPanelSetting = "general";
+    private String[] controlPanelSettings = {"general", "bodies", "pre-sets", "settings", "slides"};
 
     //images! I despise you, we'll get back to it eventually
 
@@ -128,10 +133,13 @@ public class ThreeBodyApplication extends Application {
     private StackPane draw2D() {
         StackPane hud = new StackPane();
 
+        BorderPane border = new BorderPane();
+        border.setLeft(drawLeftPane());
+
         Button panButton = new Button("Pan");
         Button dragButton = new Button("Drag");
 
-        panButton.setOnMouseClicked(event -> {
+        panButton.setOnAction(event -> {
             if (!this.cameraMode.equals("pan")) {
                 this.cameraMode = "pan";
             } else {
@@ -139,7 +147,7 @@ public class ThreeBodyApplication extends Application {
             }
         });
 
-        dragButton.setOnMouseClicked(event -> {
+        dragButton.setOnAction(event -> {
             if (!this.cameraMode.equals("drag")) {
                 this.cameraMode = "drag";
             } else {
@@ -148,12 +156,168 @@ public class ThreeBodyApplication extends Application {
         });
 
         VBox controls = new VBox(10, panButton, dragButton);
-        controls.setAlignment(Pos.TOP_LEFT);
+        controls.setAlignment(Pos.TOP_RIGHT);
         controls.setStyle("-fx-padding: 20;");
 
         hud.getChildren().add(controls);
+        hud.getChildren().add(border);
 
         return hud;
+    }
+
+    private Node drawLeftPane() {  // Changed return type to Node
+        HBox container = new HBox();
+
+        // Tab column (vertical buttons on the left)
+        VBox tabColumn = new VBox(5);
+        tabColumn.setStyle("-fx-background-color: #222021; -fx-padding: 5;");
+        tabColumn.setPrefWidth(100);
+
+
+        // Content panel
+        VBox contentPanel = drawLeftPaneContent();
+
+        drawLeftPanelTabs(tabColumn, contentPanel);
+
+
+        container.getChildren().addAll(contentPanel, tabColumn);
+        return container;
+    }
+
+    private void drawLeftPanelTabs(VBox tabColumn, VBox contentPanel) {
+        if (!tabColumn.getChildren().isEmpty()) {
+            tabColumn.getChildren().clear();
+        }
+
+        Button[] tabs = new Button[5];
+        tabs[0] = new Button("General");
+        tabs[1] = new Button("Bodies");
+        tabs[2] = new Button("Pre-sets");
+        tabs[3] = new Button("Settings");
+        tabs[4] = new Button("Slides");
+
+        String tabStyle = "-fx-background-color: #884000; -fx-text-fill: #e0dad0; -fx-pref-width: 100; -fx-min-height: 50;-fx-font-size: 16px; -fx-font-family: 'Book Antiqua';";
+        String activeTabStyle = "-fx-background-color: linear-gradient(to right, #ffcf57, #ff9c4f); -fx-text-fill: #140d07; -fx-pref-width: 100; -fx-min-height: 50; -fx-font-size: 16px; -fx-font-family:'Book Antiqua'; -fx-font-weight: bold;";
+
+        for (int i = 0; i < tabs.length; i++) {
+            Button tab = tabs[i];
+            int index = i;
+
+            tab.setStyle(tabStyle);
+
+            //hover effect
+            tab.setOnMouseEntered(e -> {
+                if (!controlPanelSetting.equals(controlPanelSettings[index])) {
+                    tab.setStyle(activeTabStyle);
+                }
+            });
+
+            tab.setOnMouseExited(e -> {
+                if (!controlPanelSetting.equals(controlPanelSettings[index])) {
+                    tab.setStyle(tabStyle);
+                }
+            });
+
+            tabColumn.getChildren().add(tab);
+        }
+
+
+        //set active tab style
+        int temp = 0;
+        for (int i = 0; i < controlPanelSettings.length; i++) {
+            if (controlPanelSettings[i].equals(controlPanelSetting)) {
+                temp = i;
+            }
+        }
+        tabs[temp].setStyle(activeTabStyle);
+
+        // Set up tab switching
+        tabs[0].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[0];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+
+        tabs[1].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[1];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+
+        tabs[2].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[2];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+
+        tabs[3].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[3];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+
+        tabs[4].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[4];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+    }
+
+    private void drawLeftPaneContent(VBox contentPanel) {
+        if (!contentPanel.getChildren().isEmpty()) {
+            contentPanel.getChildren().clear();
+        }
+
+        switch (controlPanelSetting) {
+            case "general":
+                Label title = new Label("Three-Body Problem");
+                title.setWrapText(true);
+                title.setStyle("-fx-text-fill: #e0dad0;");
+                title.setFont(Font.font("Book Antiqua", 36));
+
+                contentPanel.getChildren().add(title);
+                break;
+
+            case "bodies":
+                displayBodiesContent();
+                break;
+            case "pre-sets":
+                break;
+            case "settings":
+                break;
+            case "slides":
+                break;
+        }
+    }
+
+    private VBox drawLeftPaneContent() {
+        VBox vbox = new VBox(10);
+
+        vbox.setMaxWidth(225);
+
+        vbox.setMaxWidth(250);
+        vbox.setPrefWidth(250);
+        vbox.setStyle("-fx-background-color: #884000; -fx-padding: 10;");
+
+        //vbox.setStyle("-fx-background-color: #6e3103; -fx-padding: 10;");
+
+        switch (controlPanelSetting) {
+            case "general":
+                Label title = new Label("Three-Body Problem");
+                title.setWrapText(true);
+                title.setStyle("-fx-text-fill: #e0dad0;");
+                title.setFont(Font.font("Book Antiqua", 36));
+
+                vbox.getChildren().add(title);
+                break;
+
+        }
+
+        return vbox;
+    }
+
+    private void displayBodiesContent(){
+        
     }
 
     private SubScene draw3D() {
@@ -164,13 +328,22 @@ public class ThreeBodyApplication extends Application {
         Color bluePlane = Color.web("#73c2fb");
 
         //xy plane
-        Group xyPlane = drawPlaneXY(redPlane);
-        //xz plane
-        Group xzPlane = drawPlaneXZ(greenPlane);
-        //yz plane
-        Group yzPlane = drawPlaneYZ(bluePlane);
+        if (planeXYVisible) {
+            Group xyPlane = drawPlaneXY(redPlane);
+            root.getChildren().add(xyPlane);
+        }
 
-        root.getChildren().addAll(xyPlane, xzPlane, yzPlane);
+        //xz plane
+        if (planeXZVisible) {
+            Group xzPlane = drawPlaneXZ(greenPlane);
+            root.getChildren().add(xzPlane);
+        }
+
+        //yz plane
+        if (planeYZVisible) {
+            Group yzPlane = drawPlaneYZ(bluePlane);
+            root.getChildren().add(yzPlane);
+        }
 
         SubScene scene = new SubScene(root, frameLength, frameWidth, true, SceneAntialiasing.BALANCED);
         scene.setFill(Color.rgb(34, 32, 33));
@@ -195,7 +368,7 @@ public class ThreeBodyApplication extends Application {
         perspectiveCamera.setTranslateY(cameraTranslationY);
         perspectiveCamera.setTranslateZ(cameraTranslationZ);
 
-        System.out.println("Translations X: " + cameraTranslationX + " | Y: " + cameraTranslationY +  " | Z: " + cameraTranslationZ);
+        System.out.println("Translations X: " + cameraTranslationX + " | Y: " + cameraTranslationY + " | Z: " + cameraTranslationZ);
     }
 
     private Group drawPlaneXY(Color lineColor) {
