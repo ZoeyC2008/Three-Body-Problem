@@ -17,6 +17,7 @@ import javafx.scene.control.*;
 
 import javafx.stage.Stage;
 
+import javax.swing.text.IconView;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -135,32 +136,17 @@ public class ThreeBodyApplication extends Application {
 
         BorderPane border = new BorderPane();
         border.setLeft(drawLeftPane());
+        //border.setPickOnBounds(true);
 
-        Button panButton = new Button("Pan");
-        Button dragButton = new Button("Drag");
+        VBox rightControls = new VBox(10);
+        rightControls.setPickOnBounds(false);
+        drawRightControls(rightControls);
 
-        panButton.setOnAction(event -> {
-            if (!this.cameraMode.equals("pan")) {
-                this.cameraMode = "pan";
-            } else {
-                this.cameraMode = "none";
-            }
-        });
+        rightControls.setAlignment(Pos.TOP_RIGHT);
 
-        dragButton.setOnAction(event -> {
-            if (!this.cameraMode.equals("drag")) {
-                this.cameraMode = "drag";
-            } else {
-                this.cameraMode = "none";
-            }
-        });
 
-        VBox controls = new VBox(10, panButton, dragButton);
-        controls.setAlignment(Pos.TOP_RIGHT);
-        controls.setStyle("-fx-padding: 20;");
-
-        hud.getChildren().add(controls);
         hud.getChildren().add(border);
+        hud.getChildren().add(rightControls);
 
         return hud;
     }
@@ -317,7 +303,131 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void displayBodiesContent(){
-        
+
+    }
+
+    private void drawRightControls(VBox rightControls){
+        if (!rightControls.getChildren().isEmpty()) {
+            rightControls.getChildren().clear();
+        }
+        //all the images
+        //order is alphabetical (aka the order they show up in on the right)
+        Image[] images = new Image[12];
+        images[0] = (new Image(getClass().getResourceAsStream("/images/camera_reset_clicked.png")));
+        images[1] = (new Image(getClass().getResourceAsStream("/images/camera_reset_unclicked.png")));
+        images[2] = (new Image(getClass().getResourceAsStream("/images/drag_clicked.png")));
+        images[3] = (new Image(getClass().getResourceAsStream("/images/drag_unclicked.png")));
+        images[4] = (new Image(getClass().getResourceAsStream("/images/pan_clicked.png")));
+        images[5] = (new Image(getClass().getResourceAsStream("/images/pan_unclicked.png")));
+        images[6] = (new Image(getClass().getResourceAsStream("/images/pause_clicked.png")));
+        images[7] = (new Image(getClass().getResourceAsStream("/images/pause_unclicked.png")));
+        images[8] = (new Image(getClass().getResourceAsStream("/images/play_clicked.png")));
+        images[9] = (new Image(getClass().getResourceAsStream("/images/play_unclicked.png")));
+        images[10] = (new Image(getClass().getResourceAsStream("/images/reset_clicked.png")));
+        images[11] = (new Image(getClass().getResourceAsStream("/images/reset_unclicked.png")));
+
+
+        //camera reset button
+        Button cameraResetButton = new Button();
+        //icon
+        ImageView cameraResetIcon = new ImageView(images[1]);
+        cameraResetIcon.setPreserveRatio(true);
+        cameraResetIcon.setFitWidth(100);
+        cameraResetIcon.setFitHeight(100);
+        //button settings
+        cameraResetButton.setStyle("-fx-background-color: transparent;");
+        cameraResetButton.setGraphic(cameraResetIcon);
+        //animations when hovering
+        cameraResetButton.setOnMouseEntered(e -> {
+            cameraResetIcon.setImage(images[0]);
+        });
+        cameraResetButton.setOnMouseExited(e -> {
+            cameraResetIcon.setImage(images[1]);
+        });
+        //on click, stuff happens
+        cameraResetButton.setOnAction(e -> {
+            setDefaultCamera();
+        });
+
+        //drag button
+        Button dragButton = new Button();
+        //icon
+        ImageView dragIcon = new ImageView();
+        if (this.cameraMode.equals("drag")){
+            dragIcon.setImage(images[2]);
+        } else {
+            dragIcon.setImage(images[3]);
+        }
+        dragIcon.setPreserveRatio(true);
+        dragIcon.setFitWidth(100);
+        dragIcon.setFitHeight(100);
+        //button initially
+        dragButton.setStyle("-fx-background-color: transparent;");
+        dragButton.setGraphic(dragIcon);
+        //on hover animations
+        dragButton.setOnMouseEntered(e -> {
+            if (this.cameraMode.equals("drag")) {
+                dragIcon.setImage(images[3]);  // stay clicked if active
+            } else {
+                dragIcon.setImage(images[2]);  // unclicked if inactive
+            }
+        });
+        dragButton.setOnMouseExited(e -> {
+            if (this.cameraMode.equals("drag")) {
+                dragIcon.setImage(images[2]);  // stay clicked if active
+            } else {
+                dragIcon.setImage(images[3]);  // unclicked if inactive
+            }
+        });
+        //onclick
+        dragButton.setOnAction(e -> {
+            if (!this.cameraMode.equals("drag")) {
+                this.cameraMode = "drag";
+            } else {
+                this.cameraMode = "none";
+            }
+            drawRightControls(rightControls);
+        });
+
+        //pan button
+        Button panButton = new Button();
+        //icon
+        ImageView panIcon = new ImageView();
+        if (this.cameraMode.equals("pan")){
+            panIcon.setImage(images[4]);
+        } else {
+            panIcon.setImage(images[5]);
+        }
+        panIcon.setPreserveRatio(true);
+        panIcon.setFitWidth(100);
+        panIcon.setFitHeight(100);
+        //button styling
+        panButton.setStyle("-fx-background-color: transparent;");
+        panButton.setGraphic(panIcon);
+        panButton.setOnMouseEntered(e -> {
+            if (this.cameraMode.equals("pan")) {
+                panIcon.setImage(images[5]);  // stay clicked if active
+            } else {
+                panIcon.setImage(images[4]);  // unclicked if inactive
+            }
+        });
+        panButton.setOnMouseExited(e -> {
+            if (this.cameraMode.equals("pan")) {
+                panIcon.setImage(images[4]);  // stay clicked if active
+            } else {
+                panIcon.setImage(images[5]);  // unclicked if inactive
+            }
+        });
+        panButton.setOnAction(e -> {
+            if (!this.cameraMode.equals("pan")) {
+                this.cameraMode = "pan";
+            } else {
+                this.cameraMode = "none";
+            }
+            drawRightControls(rightControls);
+        });
+
+        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton);
     }
 
     private SubScene draw3D() {
@@ -352,6 +462,8 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void setDefaultCamera() {
+        perspectiveCamera.getTransforms().clear();
+
         perspectiveCamera.setTranslateX(CAMERA_DEFAULT_TRANSLATION_X);
         perspectiveCamera.setTranslateY(CAMERA_DEFAULT_TRANSLATION_Y);
         perspectiveCamera.setTranslateZ(CAMERA_DEFAULT_TRANSLATION_Z);
