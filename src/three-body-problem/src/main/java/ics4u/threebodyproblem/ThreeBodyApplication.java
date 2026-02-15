@@ -30,7 +30,7 @@ public class ThreeBodyApplication extends Application {
     int frameWidth = 750;
 
     double gridSize = 700;
-    double spacing = 35;
+    double spacing = 50;
     double lineThickness = 2;
 
     PerspectiveCamera perspectiveCamera = new PerspectiveCamera(true);
@@ -65,14 +65,22 @@ public class ThreeBodyApplication extends Application {
     private final Color[] BODY_DEFAULT_COLOURS = {Color.web("#d55e5c"), Color.web("#5c7fd6"), Color.web("#6fcf97"), Color.web("#d68a4c"), Color.web("#8b6fd6"), Color.web("d6c35c"), Color.web("c86bbe"), Color.web("4fbfd8"), Color.web("#b8734f")};
     private boolean isPlaying = false;
 
+    private Group root3D;
+
     @Override
     public void start(Stage primaryStage) throws IOException {
 
         perspectiveCamera.setFarClip(10000);
         setDefaultCamera();
 
+        root3D = new Group();
 
-        SubScene subScene3D = draw3D();
+        update3D(root3D);
+
+        //SubScene subScene3D = draw3D();
+
+        SubScene subScene3D = new SubScene(root3D, frameLength, frameWidth, true, SceneAntialiasing.BALANCED);
+        subScene3D.setFill(Color.rgb(34, 32, 33));
         subScene3D.setCamera(perspectiveCamera);
 
         StackPane hud = draw2D();
@@ -136,6 +144,9 @@ public class ThreeBodyApplication extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
+    private void play(){}
+    private void pause(){}
 
     private StackPane draw2D() {
         StackPane hud = new StackPane();
@@ -363,6 +374,7 @@ public class ThreeBodyApplication extends Application {
             if (!bodies.isEmpty()) {
                 bodies.remove(bodies.size() - 1);
                 displayBodiesContent(contentPanel);
+                update3D(root3D);
             }
         });
 
@@ -391,6 +403,7 @@ public class ThreeBodyApplication extends Application {
             if (!(numBodies == 9)) {
                 bodies.add(new Body(BODY_DEFAULT_COLOURS[numBodies]));
                 displayBodiesContent(contentPanel);
+                update3D(root3D);
             }
         });
 
@@ -716,15 +729,111 @@ public class ThreeBodyApplication extends Application {
             drawRightControls(rightControls);
         });
 
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        //play & pause button
+        //pan button
+        Button playButton = new Button();
+        //icon
+        ImageView playIcon = new ImageView();
+        if (isPlaying) {
+            playIcon.setImage(images[7]);
+        } else {
+            panIcon.setImage(images[9]);
+        }
+        playIcon.setPreserveRatio(true);
+        playIcon.setFitWidth(100);
+        playIcon.setFitHeight(100);
+        //button styling
+        playButton.setStyle("-fx-background-color: transparent;");
+        playButton.setGraphic(panIcon);
+        playButton.setOnMouseEntered(e -> {
+            if (isPlaying) {
+                panIcon.setImage(images[6]);  // stay clicked if active
+            } else {
+                panIcon.setImage(images[8]);  // unclicked if inactive
+            }
+        });
+        playButton.setOnMouseExited(e -> {
+            if (isPlaying) {
+                playIcon.setImage(images[7]);
+            } else {
+                panIcon.setImage(images[9]);
+            }
+        });
+        playButton.setOnAction(e -> {
+            if (isPlaying) {
+                isPlaying = false;
+                pause();
+            } else {
+                isPlaying = true;
+                play();
+            }
+            drawRightControls(rightControls);
+        });
+
         rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton);
+    }
+
+    private void update3D(Group root) {
+        if (!root.getChildren().isEmpty()) {
+            root.getChildren().clear();
+        }
+
+        drawPlanes(root);
+
+        if (!bodies.isEmpty()) {
+            for (int i = 0; i < bodies.size(); i++) {
+                drawSphere(root, i);
+            }
+        }
+    }
+
+    private void drawSphere(Group root, int bodyNum) {
+        Sphere body = new Sphere (bodies.get(bodyNum).getRadius());
+
+        body.setTranslateX(bodies.get(bodyNum).getPosition().getXValue());
+        body.setTranslateY(bodies.get(bodyNum).getPosition().getYValue());
+        body.setTranslateZ(bodies.get(bodyNum).getPosition().getZValue());
+
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseColor(bodies.get(bodyNum).getColour());
+        body.setMaterial(material);
+
+        root.getChildren().add(body);
+    }
+
+    private void drawPlanes(Group root) {
+        Color redPlane = Color.web("#8a5050");
+        Color greenPlane = Color.web("#508a50");
+        Color bluePlane = Color.web("#50508a");
+
+        //xy plane
+        if (planeXYVisible) {
+            Group xyPlane = drawPlaneXY(redPlane);
+            root.getChildren().add(xyPlane);
+        }
+
+        //xz plane
+        if (planeXZVisible) {
+            Group xzPlane = drawPlaneXZ(greenPlane);
+            root.getChildren().add(xzPlane);
+        }
+
+        //yz plane
+        if (planeYZVisible) {
+            Group yzPlane = drawPlaneYZ(bluePlane);
+            root.getChildren().add(yzPlane);
+        }
     }
 
     private SubScene draw3D() {
         Group root = new Group();
 
-        Color redPlane = Color.web("#fa8072");
-        Color greenPlane = Color.web("#98fb98");
-        Color bluePlane = Color.web("#73c2fb");
+        Color redPlane = Color.web("#9a5050");
+        Color greenPlane = Color.web("#509a50");
+        Color bluePlane = Color.web("#50509a");
 
         //xy plane
         if (planeXYVisible) {

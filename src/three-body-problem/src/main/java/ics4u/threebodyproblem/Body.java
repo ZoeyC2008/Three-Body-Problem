@@ -16,11 +16,11 @@ public class Body {
     Color colour;
 
     public Body(){
-        this.radius = 10;
+        this.radius = 20;
     }
 
     public Body(Color colour){
-        this.radius = 10;
+        this.radius = 20;
         this.colour = colour;
         this.position = new Vector3D(0, 0, 0);
         this.velocity = new Vector3D(0, 0, 0);
@@ -33,7 +33,7 @@ public class Body {
         this.position = new Vector3D(position);
         this.velocity = new Vector3D(0, 0, 0);
         this.acceleration = new Vector3D(0, 0, 0);
-        this.radius = 10;
+        this.radius = 20;
 
     }
 
@@ -42,7 +42,7 @@ public class Body {
         this.position = new Vector3D(position);
         this.velocity = new Vector3D(velocity);
         this.acceleration = new Vector3D(0, 0, 0);
-        this.radius = 10;
+        this.radius = 20;
 
     }
 
