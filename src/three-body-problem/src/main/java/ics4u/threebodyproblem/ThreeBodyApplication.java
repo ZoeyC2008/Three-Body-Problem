@@ -159,11 +159,15 @@ public class ThreeBodyApplication extends Application {
         rightControls.setPickOnBounds(false);
         drawRightControls(rightControls);
 
-        rightControls.setAlignment(Pos.TOP_RIGHT);
 
+        rightControls.setPrefWidth(125);
+        rightControls.setMaxWidth(125);
+        rightControls.setAlignment(Pos.TOP_RIGHT);
 
         hud.getChildren().add(border);
         hud.getChildren().add(rightControls);
+
+        StackPane.setAlignment(rightControls, Pos.TOP_RIGHT);
 
         return hud;
     }
@@ -471,9 +475,25 @@ public class ThreeBodyApplication extends Application {
         xPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField xPosInput = new TextField();
+        xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
         if (!isPlaying) {
             xPosInput.setStyle(enabledInputStyle);
             xPosInput.setDisable(false);
+
+            xPosInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) { // Lost focus
+                    try {
+                        double value = Double.parseDouble(xPosInput.getText());
+                        bodies.get(bodyNum).getPosition().setXValue(value);
+                        xPosInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        xPosInput.setStyle(errorInputStyle);
+                        // Optionally restore old value
+                        xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
+                    }
+                }
+            });
         } else {
             xPosInput.setStyle(disabledInputStyle);
             xPosInput.setDisable(true);
@@ -485,9 +505,24 @@ public class ThreeBodyApplication extends Application {
         yPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField yPosInput = new TextField();
+        yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
         if (!isPlaying) {
             yPosInput.setStyle(enabledInputStyle);
             yPosInput.setDisable(false);
+
+            yPosInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(yPosInput.getText());
+                        bodies.get(bodyNum).getPosition().setYValue(value);
+                        yPosInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        yPosInput.setStyle(errorInputStyle);
+                        yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
+                    }
+                }
+            });
         } else {
             yPosInput.setStyle(disabledInputStyle);
             yPosInput.setDisable(true);
@@ -499,9 +534,24 @@ public class ThreeBodyApplication extends Application {
         zPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField zPosInput = new TextField();
+        zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
         if (!isPlaying) {
             zPosInput.setStyle(enabledInputStyle);
             zPosInput.setDisable(false);
+
+            zPosInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(zPosInput.getText());
+                        bodies.get(bodyNum).getPosition().setZValue(value);
+                        zPosInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        zPosInput.setStyle(errorInputStyle);
+                        zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
+                    }
+                }
+            });
         } else {
             zPosInput.setStyle(disabledInputStyle);
             zPosInput.setDisable(true);
@@ -525,9 +575,24 @@ public class ThreeBodyApplication extends Application {
         xVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField xVelocityInput = new TextField();
+        xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
         if (!isPlaying) {
             xVelocityInput.setStyle(enabledInputStyle);
             xVelocityInput.setDisable(false);
+
+            xVelocityInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(xVelocityInput.getText());
+                        bodies.get(bodyNum).getVelocity().setXValue(value);
+                        xVelocityInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        xVelocityInput.setStyle(errorInputStyle);
+                        xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
+                    }
+                }
+            });
         } else {
             xVelocityInput.setStyle(disabledInputStyle);
             xVelocityInput.setDisable(true);
@@ -539,9 +604,24 @@ public class ThreeBodyApplication extends Application {
         yVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField yVelocityInput = new TextField();
+        yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
         if (!isPlaying) {
             yVelocityInput.setStyle(enabledInputStyle);
             yVelocityInput.setDisable(false);
+
+            yVelocityInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(yVelocityInput.getText());
+                        bodies.get(bodyNum).getVelocity().setYValue(value);
+                        yVelocityInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        yVelocityInput.setStyle(errorInputStyle);
+                        yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
+                    }
+                }
+            });
         } else {
             yVelocityInput.setStyle(disabledInputStyle);
             yVelocityInput.setDisable(true);
@@ -553,9 +633,23 @@ public class ThreeBodyApplication extends Application {
         zVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField zVelocityInput = new TextField();
+        zVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getZValue());
         if (!isPlaying) {
             zVelocityInput.setStyle(enabledInputStyle);
             zVelocityInput.setDisable(false);
+
+            zVelocityInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(zVelocityInput.getText());
+                        bodies.get(bodyNum).getVelocity().setZValue(value);
+                        zVelocityInput.setStyle(enabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        zVelocityInput.setStyle(errorInputStyle);
+                    }
+                }
+            });
         } else {
             zVelocityInput.setStyle(disabledInputStyle);
             zVelocityInput.setDisable(true);
@@ -733,33 +827,32 @@ public class ThreeBodyApplication extends Application {
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         //play & pause button
-        //pan button
         Button playButton = new Button();
         //icon
         ImageView playIcon = new ImageView();
         if (isPlaying) {
             playIcon.setImage(images[7]);
         } else {
-            panIcon.setImage(images[9]);
+            playIcon.setImage(images[9]);
         }
         playIcon.setPreserveRatio(true);
         playIcon.setFitWidth(100);
         playIcon.setFitHeight(100);
         //button styling
         playButton.setStyle("-fx-background-color: transparent;");
-        playButton.setGraphic(panIcon);
+        playButton.setGraphic(playIcon);
         playButton.setOnMouseEntered(e -> {
             if (isPlaying) {
-                panIcon.setImage(images[6]);  // stay clicked if active
+                playIcon.setImage(images[6]);  // stay clicked if active
             } else {
-                panIcon.setImage(images[8]);  // unclicked if inactive
+                playIcon.setImage(images[8]);  // unclicked if inactive
             }
         });
         playButton.setOnMouseExited(e -> {
             if (isPlaying) {
                 playIcon.setImage(images[7]);
             } else {
-                panIcon.setImage(images[9]);
+                playIcon.setImage(images[9]);
             }
         });
         playButton.setOnAction(e -> {
@@ -773,7 +866,7 @@ public class ThreeBodyApplication extends Application {
             drawRightControls(rightControls);
         });
 
-        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton);
+        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer,  playButton);
     }
 
     private void update3D(Group root) {
@@ -882,7 +975,7 @@ public class ThreeBodyApplication extends Application {
         perspectiveCamera.setTranslateY(cameraTranslationY);
         perspectiveCamera.setTranslateZ(cameraTranslationZ);
 
-        System.out.println("Translations X: " + cameraTranslationX + " | Y: " + cameraTranslationY + " | Z: " + cameraTranslationZ);
+        //System.out.println("Translations X: " + cameraTranslationX + " | Y: " + cameraTranslationY + " | Z: " + cameraTranslationZ);
     }
 
     private Group drawPlaneXY(Color lineColor) {
