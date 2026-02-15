@@ -8,6 +8,7 @@ public class Body {
     private Vector3D position;
     private Vector3D velocity;
     private Vector3D acceleration;
+    private Vector3D previousAcceleration; //it's for leapfrog
     private Vector3D force;
     private static String integrationMethod = "leapfrog";
     private static String[] integrationMethods = {"rk4", "leapfrog", "euler"};
@@ -46,17 +47,58 @@ public class Body {
 
     }
 
-    public void integrate(Body[] bodies) {
-        switch (this.integrationMethod) {
+    public static void integrate(Body[] bodies) {
+        switch (Body.integrationMethod) {
             case "rk4":
                 //tragically need to work on this later
             case "leapfrog":
-                leapfrogIntegration(bodies);
+                //leapfrogIntegration(bodies);
+                for (int i = 0; i < bodies.length; i++) {
+                    bodies[i].updateAcceleration(bodies);
+                }
+
+                leapfrogUpdatePosition(bodies);
+
+                for (int i = 0; i < bodies.length; i++) {
+                    bodies[i].cacheAcceleration();
+                    bodies[i].updateAcceleration(bodies);
+                }
+
+                leapfrogUpdateVelocity(bodies);
+                break;
             case "euler":
             default:
         }
     }
 
+    //integration methods that i'm using in the static one
+    private static void leapfrogUpdatePosition(Body[] bodies) {
+        for (int i = 0; i < bodies.length; i++) {
+            double newXPosition = (bodies[i].getPosition().getXValue()) + (bodies[i].getVelocity().getXValue() * Body.getTimeStep()) + (bodies[i].getAcceleration().getXValue() * Body.getTimeStep() * Body.getTimeStep() / 2);
+
+            double newYPosition = (bodies[i].getPosition().getYValue()) + (bodies[i].getVelocity().getYValue() * Body.getTimeStep()) + (bodies[i].getAcceleration().getYValue() * Body.getTimeStep()  * Body.getTimeStep()/ 2);
+
+            double newZPosition = (bodies[i].getPosition().getZValue()) + (bodies[i].getVelocity().getZValue() * Body.getTimeStep()) + (bodies[i].getAcceleration().getZValue() * Body.getTimeStep() * Body.getTimeStep() / 2);
+
+            Vector3D newPosition = new Vector3D(newXPosition, newYPosition, newZPosition);
+
+            bodies[i].setPosition(newPosition);
+        }
+    }
+
+    private static void leapfrogUpdateVelocity(Body[] bodies) {
+        for (int i = 0; i < bodies.length; i++) {
+            double newXVelocity = bodies[i].getVelocity().getXValue() + (bodies[i].getAcceleration().getXValue() + bodies[i].getPreviousAcceleration().getXValue()) * Body.getTimeStep() / 2;
+
+            double newYVelocity = bodies[i].getVelocity().getYValue() + (bodies[i].getAcceleration().getYValue() + bodies[i].getPreviousAcceleration().getYValue()) * Body.getTimeStep() / 2;
+
+            double newZVelocity = bodies[i].getVelocity().getZValue() + (bodies[i].getAcceleration().getZValue() + bodies[i].getPreviousAcceleration().getZValue()) * Body.getTimeStep() / 2;
+
+            Vector3D newVelocity = new Vector3D(newXVelocity, newYVelocity, newZVelocity);
+
+            bodies[i].setVelocity(newVelocity);
+        }
+    }
     //returns acceleration
     private Vector3D lawOfGravitation(Body other) {
         Vector3D vector = other.getPosition().subtract(this.getPosition());
@@ -86,6 +128,7 @@ public class Body {
         this.setAcceleration(newAcceleration);
     }
 
+    //integration methods, but it's more like a blueprint (there will be liberal copy-pasting, but a blueprint nonetheless)
     private void rk4Integration() {
     }
 
@@ -183,5 +226,13 @@ public class Body {
 
     public Color getColour() {
         return colour;
+    }
+
+    private void cacheAcceleration() {
+        this.previousAcceleration = this.acceleration;
+    }
+
+    public Vector3D getPreviousAcceleration() {
+        return previousAcceleration;
     }
 }
