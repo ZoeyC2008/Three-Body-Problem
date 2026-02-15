@@ -1,7 +1,9 @@
 package ics4u.threebodyproblem;
 
 import javafx.application.Application;
+import javafx.event.Event;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Orientation;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.*;
@@ -19,6 +21,7 @@ import javafx.stage.Stage;
 
 import javax.swing.text.IconView;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class ThreeBodyApplication extends Application {
@@ -57,7 +60,10 @@ public class ThreeBodyApplication extends Application {
     private String controlPanelSetting = "general";
     private String[] controlPanelSettings = {"general", "bodies", "pre-sets", "settings", "slides"};
 
-    //images! I despise you, we'll get back to it eventually
+    //it's so bodies time
+    private ArrayList<Body> bodies = new ArrayList<Body>();
+    private final Color[] BODY_DEFAULT_COLOURS = {Color.web("#d55e5c"), Color.web("#5c7fd6"), Color.web("#6fcf97"), Color.web("#d68a4c"), Color.web("#8b6fd6"), Color.web("d6c35c"), Color.web("c86bbe"), Color.web("4fbfd8"), Color.web("#b8734f")};
+    private boolean isPlaying = false;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -161,12 +167,28 @@ public class ThreeBodyApplication extends Application {
 
 
         // Content panel
-        VBox contentPanel = drawLeftPaneContent();
+        VBox contentPanel = new VBox(10);
+        contentPanel.setMaxWidth(250);
+        contentPanel.setPrefWidth(250);
+        contentPanel.setStyle("-fx-background-color: #884000; -fx-padding: 10;");
+        drawLeftPaneContent(contentPanel);
+
+        //scrollpane to contain the content pane
+        ScrollPane scrollPane = new ScrollPane(contentPanel);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setMaxWidth(250);
+        scrollPane.setPrefWidth(250);
+        scrollPane.setStyle("-fx-background:#884000;");
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        //scrollPane.addEventFilter(ScrollEvent.SCROLL, Event::consume);
+
 
         drawLeftPanelTabs(tabColumn, contentPanel);
 
 
-        container.getChildren().addAll(contentPanel, tabColumn);
+        container.getChildren().addAll(scrollPane, tabColumn);
+        container.setOnScroll(Event::consume);
         return container;
     }
 
@@ -261,11 +283,14 @@ public class ThreeBodyApplication extends Application {
                 title.setStyle("-fx-text-fill: #e0dad0;");
                 title.setFont(Font.font("Book Antiqua", 36));
 
-                contentPanel.getChildren().add(title);
+                HBox centeredTitle = new HBox(title);
+                centeredTitle.setAlignment(Pos.CENTER);
+
+                contentPanel.getChildren().add(centeredTitle);
                 break;
 
             case "bodies":
-                displayBodiesContent();
+                displayBodiesContent(contentPanel);
                 break;
             case "pre-sets":
                 break;
@@ -276,37 +301,301 @@ public class ThreeBodyApplication extends Application {
         }
     }
 
-    private VBox drawLeftPaneContent() {
+    private void displayBodiesContent(VBox contentPanel) {
+        if (!contentPanel.getChildren().isEmpty()) {
+            contentPanel.getChildren().clear();
+        }
+
+        //title
+        Label title = new Label("On Bodies");
+        title.setWrapText(true);
+        title.setStyle("-fx-text-fill: #e0dad0;");
+        title.setFont(Font.font("Book Antiqua", 36));
+
+        HBox centeredTitle = new HBox(title);
+        centeredTitle.setAlignment(Pos.CENTER);
+
+        contentPanel.getChildren().add(centeredTitle);
+
+        //line
+        Separator separator = new Separator(Orientation.HORIZONTAL);
+        separator.setStyle("-fx-background-color:#e0dad0;");
+        contentPanel.getChildren().add(separator);
+
+        //number of bodies in simulation
+        Label bodyNumber = new Label("Number of Bodies: ");
+        bodyNumber.setStyle("-fx-text-fill: #e0dad0;");
+        bodyNumber.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(bodyNumber);
+
+        //some styling for the add and subtract buttons
+        String neutralTabStyle = "-fx-background-color: #e0dad0; -fx-text-fill: #140d07; -fx-pref-width: 20; -fx-pref-height: 20;-fx-font-size: 32px; -fx-font-family: 'Book Antiqua'; -fx-background-radius: 10;";
+        String inactiveTabStyle = "-fx-background-color: #807b7e; -fx-text-fill: #140d07; -fx-pref-width: 20; -fx-pref-height: 20;-fx-font-size: 32px; -fx-font-family: 'Book Antiqua'; -fx-background-radius: 10;";
+        String activeTabStyle = "-fx-background-color: linear-gradient(to right, #ffcf57, #ff9c4f); -fx-text-fill: #140d07; -fx-pref-width: 20; -fx-pref-height: 20; -fx-font-size: 32px; -fx-font-family:'Book Antiqua'; -fx-font-weight: bold; -fx-background-radius: 10;";
+
+        //adding and subtracting
+        int numBodies = bodies.size();
+        //System.out.println("Content panel, num bodies: " + numBodies);
+
+        Button subtractBodies = new Button("-");
+
+        if (numBodies == 0) {
+            subtractBodies.setStyle(inactiveTabStyle);
+        } else {
+            subtractBodies.setStyle(neutralTabStyle);
+        }
+
+        subtractBodies.setOnMouseEntered(e -> {
+            if (!(numBodies == 0)) {
+                subtractBodies.setStyle(activeTabStyle);
+            }
+        });
+
+        subtractBodies.setOnMouseExited(e -> {
+            if (numBodies == 0) {
+                subtractBodies.setStyle(inactiveTabStyle);
+            } else {
+                subtractBodies.setStyle(neutralTabStyle);
+            }
+        });
+
+        subtractBodies.setOnAction(e -> {
+            if (!bodies.isEmpty()) {
+                bodies.remove(bodies.size() - 1);
+                displayBodiesContent(contentPanel);
+            }
+        });
+
+        Button addBodies = new Button("+");
+        if (numBodies == 9) {
+            addBodies.setStyle(inactiveTabStyle);
+        } else {
+            addBodies.setStyle(neutralTabStyle);
+        }
+
+        addBodies.setOnMouseEntered(e -> {
+            if (!(numBodies == 9)) {
+                addBodies.setStyle(activeTabStyle);
+            }
+        });
+
+        addBodies.setOnMouseExited(e -> {
+            if (numBodies == 9) {
+                addBodies.setStyle(inactiveTabStyle);
+            } else {
+                addBodies.setStyle(neutralTabStyle);
+            }
+        });
+
+        addBodies.setOnAction(e -> {
+            if (!(numBodies == 9)) {
+                bodies.add(new Body(BODY_DEFAULT_COLOURS[numBodies]));
+                displayBodiesContent(contentPanel);
+            }
+        });
+
+        Label numBodiesLabel = new Label(String.valueOf(numBodies));
+        numBodiesLabel.setStyle("-fx-background-color: #e0dad0; -fx-text-fill: #140d07; -fx-font-size: 40px; -fx-font-family: 'Book Antiqua'; -fx-font-weight: bold; -fx-padding: 10 20 10 20; -fx-background-radius: 10; -fx-min-width: 60; -fx-min-height: 40; -fx-alignment: center;");
+
+
+        HBox setBodyNum = new HBox(10);
+        setBodyNum.getChildren().addAll(subtractBodies, numBodiesLabel, addBodies);
+        setBodyNum.setAlignment(Pos.CENTER);
+
+        contentPanel.getChildren().add(setBodyNum);
+
+        //actually displaying the information of the bodies
+
+        if (!bodies.isEmpty()) {
+            for (int i = 0; i < bodies.size(); i++) {
+                Separator bodySeparator = new Separator(Orientation.HORIZONTAL);
+                bodySeparator.setStyle("-fx-background-color:#e0dad0;");
+                contentPanel.getChildren().add(bodySeparator);
+
+                VBox bodyVBox = displayBodyInfo(i);
+                contentPanel.getChildren().add(bodyVBox);
+            }
+        }
+    }
+
+    private VBox displayBodyInfo(int bodyNum) {
         VBox vbox = new VBox(10);
 
-        vbox.setMaxWidth(225);
+        //label at the top
+        HBox titleHBox = new HBox(10);
 
-        vbox.setMaxWidth(250);
-        vbox.setPrefWidth(250);
-        vbox.setStyle("-fx-background-color: #884000; -fx-padding: 10;");
+        Label bodyTitle = new Label("Body " + (bodyNum + 1) + "  ");
+        bodyTitle.setStyle("-fx-text-fill: #e0dad0;");
+        bodyTitle.setFont(Font.font("Book Antiqua", 24));
 
-        //vbox.setStyle("-fx-background-color: #6e3103; -fx-padding: 10;");
+        Rectangle bodyColourRectangle = new Rectangle();
+        bodyColourRectangle.setWidth(25);
+        bodyColourRectangle.setHeight(25);
+        bodyColourRectangle.setFill(bodies.get(bodyNum).getColour());
 
-        switch (controlPanelSetting) {
-            case "general":
-                Label title = new Label("Three-Body Problem");
-                title.setWrapText(true);
-                title.setStyle("-fx-text-fill: #e0dad0;");
-                title.setFont(Font.font("Book Antiqua", 36));
+        titleHBox.getChildren().addAll(bodyTitle, bodyColourRectangle);
+        titleHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(titleHBox);
 
-                vbox.getChildren().add(title);
-                break;
 
+        //alright, time for silly boxes
+        String enabledInputStyle = "-fx-background-color: #e0dad0; -fx-text-fill: #140d07; -fx-font-size: 12px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 40;";
+        String disabledInputStyle = "-fx-background-color:#807b7e; -fx-text-fill:#140d07; -fx-font-size:12px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 40; -fx-opacity: 1.0";
+        String errorInputStyle = "-fx-background-color:#ffcccc; -fx-text-fill:#cc0000; -fx-font-size: 12px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#cc0000;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 40;";
+
+
+        //positon
+        Label position = new Label("Positon:");
+        position.setStyle("-fx-text-fill: #e0dad0;");
+        position.setFont(Font.font("Book Antiqua", 18));
+        vbox.getChildren().add(position);
+
+        HBox postionHBox = new HBox(10);
+
+        //x
+        Label xPosition = new Label("X:");
+        xPosition.setStyle("-fx-text-fill: #e0dad0;");
+        xPosition.setFont(Font.font("Book Antiqua", 12));
+
+        TextField xPosInput = new TextField();
+        if (!isPlaying) {
+            xPosInput.setStyle(enabledInputStyle);
+            xPosInput.setDisable(false);
+        } else {
+            xPosInput.setStyle(disabledInputStyle);
+            xPosInput.setDisable(true);
         }
+
+        //y
+        Label yPosition = new Label("Y:");
+        yPosition.setStyle("-fx-text-fill: #e0dad0;");
+        yPosition.setFont(Font.font("Book Antiqua", 12));
+
+        TextField yPosInput = new TextField();
+        if (!isPlaying) {
+            yPosInput.setStyle(enabledInputStyle);
+            yPosInput.setDisable(false);
+        } else {
+            yPosInput.setStyle(disabledInputStyle);
+            yPosInput.setDisable(true);
+        }
+
+        //z
+        Label zPosition = new Label("Z:");
+        zPosition.setStyle("-fx-text-fill: #e0dad0;");
+        zPosition.setFont(Font.font("Book Antiqua", 12));
+
+        TextField zPosInput = new TextField();
+        if (!isPlaying) {
+            zPosInput.setStyle(enabledInputStyle);
+            zPosInput.setDisable(false);
+        } else {
+            zPosInput.setStyle(disabledInputStyle);
+            zPosInput.setDisable(true);
+        }
+
+        postionHBox.getChildren().addAll(xPosition, xPosInput, yPosition, yPosInput, zPosition, zPosInput);
+        postionHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(postionHBox);
+
+        //velocity (i swear this is all important for when the user is allowed to set up their own thing)
+        Label velocity = new Label("Velocity:");
+        velocity.setStyle("-fx-text-fill: #e0dad0;");
+        velocity.setFont(Font.font("Book Antiqua", 18));
+        vbox.getChildren().add(velocity);
+
+        HBox velocityHBox = new HBox(10);
+
+        //x
+        Label xVelocity = new Label("X:");
+        xVelocity.setStyle("-fx-text-fill: #e0dad0;");
+        xVelocity.setFont(Font.font("Book Antiqua", 12));
+
+        TextField xVelocityInput = new TextField();
+        if (!isPlaying) {
+            xVelocityInput.setStyle(enabledInputStyle);
+            xVelocityInput.setDisable(false);
+        } else {
+            xVelocityInput.setStyle(disabledInputStyle);
+            xVelocityInput.setDisable(true);
+        }
+
+        //y
+        Label yVelocity = new Label("Y:");
+        yVelocity.setStyle("-fx-text-fill: #e0dad0;");
+        yVelocity.setFont(Font.font("Book Antiqua", 12));
+
+        TextField yVelocityInput = new TextField();
+        if (!isPlaying) {
+            yVelocityInput.setStyle(enabledInputStyle);
+            yVelocityInput.setDisable(false);
+        } else {
+            yVelocityInput.setStyle(disabledInputStyle);
+            yVelocityInput.setDisable(true);
+        }
+
+        //z
+        Label zVelocity = new Label("Z:");
+        zVelocity.setStyle("-fx-text-fill: #e0dad0;");
+        zVelocity.setFont(Font.font("Book Antiqua", 12));
+
+        TextField zVelocityInput = new TextField();
+        if (!isPlaying) {
+            zVelocityInput.setStyle(enabledInputStyle);
+            zVelocityInput.setDisable(false);
+        } else {
+            zVelocityInput.setStyle(disabledInputStyle);
+            zVelocityInput.setDisable(true);
+        }
+
+        velocityHBox.getChildren().addAll(xVelocity, xVelocityInput, yVelocity, yVelocityInput, zVelocity, zVelocityInput);
+        velocityHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(velocityHBox);
+
+        //acceleration (but the user doesn't get to set the velocity, but I still want to use the same styles
+        Label acceleration = new Label("Acceleration:");
+        acceleration.setStyle("-fx-text-fill: #e0dad0;");
+        acceleration.setFont(Font.font("Book Antiqua", 18));
+        vbox.getChildren().add(acceleration);
+
+        HBox accelerationHBox = new HBox(10);
+
+        //x
+        Label xAcceleration = new Label("X:");
+        xAcceleration.setStyle("-fx-text-fill: #e0dad0;");
+        xAcceleration.setFont(Font.font("Book Antiqua", 12));
+
+        TextField xAccelerationDisplay = new TextField();
+        xAccelerationDisplay.setStyle(disabledInputStyle);
+        xAccelerationDisplay.setDisable(true);
+
+        //y
+        Label yAcceleration = new Label("Y:");
+        yAcceleration.setStyle("-fx-text-fill: #e0dad0;");
+        yAcceleration.setFont(Font.font("Book Antiqua", 12));
+
+        TextField yAccelerationDisplay = new TextField();
+        yAccelerationDisplay.setStyle(disabledInputStyle);
+        yAccelerationDisplay.setDisable(true);
+
+
+        //z
+        Label zAcceleration = new Label("Z:");
+        zAcceleration.setStyle("-fx-text-fill: #e0dad0;");
+        zAcceleration.setFont(Font.font("Book Antiqua", 12));
+
+        TextField zAccelerationDisplay = new TextField();
+        zAccelerationDisplay.setStyle(disabledInputStyle);
+        zAccelerationDisplay.setDisable(true);
+
+        accelerationHBox.getChildren().addAll(xAcceleration, xAccelerationDisplay, yAcceleration, yAccelerationDisplay, zAcceleration, zAccelerationDisplay);
+        accelerationHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(accelerationHBox);
 
         return vbox;
     }
 
-    private void displayBodiesContent(){
-
-    }
-
-    private void drawRightControls(VBox rightControls){
+    private void drawRightControls(VBox rightControls) {
         if (!rightControls.getChildren().isEmpty()) {
             rightControls.getChildren().clear();
         }
@@ -353,7 +642,7 @@ public class ThreeBodyApplication extends Application {
         Button dragButton = new Button();
         //icon
         ImageView dragIcon = new ImageView();
-        if (this.cameraMode.equals("drag")){
+        if (this.cameraMode.equals("drag")) {
             dragIcon.setImage(images[2]);
         } else {
             dragIcon.setImage(images[3]);
@@ -393,7 +682,7 @@ public class ThreeBodyApplication extends Application {
         Button panButton = new Button();
         //icon
         ImageView panIcon = new ImageView();
-        if (this.cameraMode.equals("pan")){
+        if (this.cameraMode.equals("pan")) {
             panIcon.setImage(images[4]);
         } else {
             panIcon.setImage(images[5]);
@@ -473,6 +762,10 @@ public class ThreeBodyApplication extends Application {
                 new Rotate(CAMERA_DEFAULT_ROTATION_Y, Rotate.Y_AXIS),
                 new Rotate(CAMERA_DEFAULT_ROTATION_Z, Rotate.Z_AXIS)    // Turn to face origin
         );
+
+        cameraTranslationX = 1535;
+        cameraTranslationY = -685;
+        cameraTranslationZ = -675;
     }
 
     private void updateCameraPosition() {

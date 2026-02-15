@@ -1,5 +1,7 @@
 package ics4u.threebodyproblem;
 
+import javafx.scene.paint.Color;
+
 public class Body {
     private double mass;
     private double radius;
@@ -7,16 +9,32 @@ public class Body {
     private Vector3D velocity;
     private Vector3D acceleration;
     private Vector3D force;
-    private String integrationMethod = "leapfrog";
-    private String[] integrationMethods = {"rk4", "leapfrog", "euler"};
+    private static String integrationMethod = "leapfrog";
+    private static String[] integrationMethods = {"rk4", "leapfrog", "euler"};
     private static double timestep = 2.0e-5;
     private final double GRAVITATIONAL_CONSTANT = 6.67430e-11;
+    Color colour;
+
+    public Body(){
+        this.radius = 10;
+    }
+
+    public Body(Color colour){
+        this.radius = 10;
+        this.colour = colour;
+        this.position = new Vector3D(0, 0, 0);
+        this.velocity = new Vector3D(0, 0, 0);
+        this.acceleration = new Vector3D(0, 0, 0);
+        this.force = new Vector3D(0, 0, 0);
+    }
 
     public Body(double mass, Vector3D position) {
         this.mass = mass;
         this.position = new Vector3D(position);
         this.velocity = new Vector3D(0, 0, 0);
         this.acceleration = new Vector3D(0, 0, 0);
+        this.radius = 10;
+
     }
 
     public Body(double mass, Vector3D position, Vector3D velocity, Vector3D acceleration) {
@@ -24,6 +42,8 @@ public class Body {
         this.position = new Vector3D(position);
         this.velocity = new Vector3D(velocity);
         this.acceleration = new Vector3D(0, 0, 0);
+        this.radius = 10;
+
     }
 
     public void integrate(Body[] bodies) {
@@ -112,17 +132,21 @@ public class Body {
         this.acceleration = acceleration;
     }
 
-    public void setTimestep(double timestep) {
+    public static void setTimestep(double timestep) {
         Body.timestep = timestep;
     }
 
-    public void setIntegrationMethod(String integrationMethod) {
+    public static void setIntegrationMethod(String integrationMethod) {
         integrationMethod = integrationMethod.toLowerCase();
-        for (int i = 0; i < this.integrationMethods.length; i++) {
-            if (this.integrationMethods[i].equals(integrationMethod)) {
-                this.integrationMethod = integrationMethods[i];
+        for (int i = 0; i < Body.integrationMethods.length; i++) {
+            if (Body.integrationMethods[i].equals(integrationMethod)) {
+                Body.integrationMethod = integrationMethods[i];
             }
         }
+    }
+
+    public void setColour(Color color) {
+        this.colour = color;
     }
 
     public double getMass() {
@@ -149,12 +173,15 @@ public class Body {
         return force;
     }
 
-    public double getTimeStep() {
+    public static double getTimeStep() {
         return timestep;
     }
 
-    public String getIntegrationMethod(){
-        return  this.integrationMethod.toLowerCase();
+    public static String getIntegrationMethod(){
+        return Body.integrationMethod.toLowerCase();
     }
 
+    public Color getColour() {
+        return colour;
+    }
 }
