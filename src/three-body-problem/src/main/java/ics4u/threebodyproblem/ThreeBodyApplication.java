@@ -49,6 +49,7 @@ public class ThreeBodyApplication extends Application {
     double cameraRotationY = 0;
 
     boolean planeXYVisible = true, planeXZVisible = true, planeYZVisible = true;
+    boolean trailsVisible = true;
 
     //camera modes
     private String cameraMode = "none";
@@ -83,6 +84,8 @@ public class ThreeBodyApplication extends Application {
     private ArrayList<TextField> accelerationXFields = new ArrayList<>();
     private ArrayList<TextField> accelerationYFields = new ArrayList<>();
     private ArrayList<TextField> accelerationZFields = new ArrayList<>();
+
+    private ArrayList<ArrayList<Point3D>> bodyTrails = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -184,21 +187,21 @@ public class ThreeBodyApplication extends Application {
         };
     }
 
-    private void play(){
+    private void play() {
         setupSimulationLoop();
         simulationTimer.start();
     }
-    private void pause(){
+
+    private void pause() {
         simulationTimer.stop();
         lastUpdate = 0;
     }
 
-    private void updateBodiesContent(){
+    private void updateBodiesContent() {
         if (!controlPanelSetting.equals("bodies")) return;
 
         // Make sure we have the right number of fields
         if (positionXFields.size() != bodies.size()) return;
-
 
 
         // Update each body's display values
@@ -389,10 +392,157 @@ public class ThreeBodyApplication extends Application {
             case "pre-sets":
                 break;
             case "settings":
+                displaySettingsContent(contentPanel);
                 break;
             case "slides":
                 break;
         }
+    }
+
+    private void displaySettingsContent(VBox contentPanel) {
+        if (!contentPanel.getChildren().isEmpty()) {
+            contentPanel.getChildren().clear();
+        }
+
+        //title
+        Label title = new Label("Settings");
+        title.setWrapText(true);
+        title.setStyle("-fx-text-fill: #e0dad0;");
+        title.setFont(Font.font("Book Antiqua", 36));
+
+        HBox centeredTitle = new HBox(title);
+        centeredTitle.setAlignment(Pos.CENTER);
+
+        contentPanel.getChildren().add(centeredTitle);
+
+        //line
+        Separator separator = new Separator(Orientation.HORIZONTAL);
+        separator.setStyle("-fx-background-color:#e0dad0;");
+        contentPanel.getChildren().add(separator);
+
+        // visibility section
+        Label planeVisibilityLabel = new Label("Visibility:");
+        planeVisibilityLabel.setStyle("-fx-text-fill: #e0dad0;");
+        planeVisibilityLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(planeVisibilityLabel);
+
+        //trails
+        CheckBox trailsCheckBox = new CheckBox("Trails");
+        trailsCheckBox.setSelected(trailsVisible);
+        trailsCheckBox.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+        trailsCheckBox.setOnAction(e -> {
+            trailsVisible = trailsCheckBox.isSelected();
+            update3D(root3D);
+        });
+        contentPanel.getChildren().add(trailsCheckBox);
+
+        // XY Plane checkbox
+        CheckBox xyPlaneCheckbox = new CheckBox("XY Plane (Red)");
+        xyPlaneCheckbox.setSelected(planeXYVisible);
+        xyPlaneCheckbox.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+        xyPlaneCheckbox.setOnAction(e -> {
+            planeXYVisible = xyPlaneCheckbox.isSelected();
+            update3D(root3D);
+        });
+        contentPanel.getChildren().add(xyPlaneCheckbox);
+
+        // XZ Plane checkbox
+        CheckBox xzPlaneCheckbox = new CheckBox("XZ Plane (Green)");
+        xzPlaneCheckbox.setSelected(planeXZVisible);
+        xzPlaneCheckbox.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+        xzPlaneCheckbox.setOnAction(e -> {
+            planeXZVisible = xzPlaneCheckbox.isSelected();
+            update3D(root3D);
+        });
+        contentPanel.getChildren().add(xzPlaneCheckbox);
+
+        // YZ Plane checkbox
+        CheckBox yzPlaneCheckbox = new CheckBox("YZ Plane (Blue)");
+        yzPlaneCheckbox.setSelected(planeYZVisible);
+        yzPlaneCheckbox.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+        yzPlaneCheckbox.setOnAction(e -> {
+            planeYZVisible = yzPlaneCheckbox.isSelected();
+            update3D(root3D);
+        });
+        contentPanel.getChildren().add(yzPlaneCheckbox);
+
+        //line;
+        Separator integrationSeparator = new Separator(Orientation.HORIZONTAL);
+        integrationSeparator.setStyle("-fx-background-color:#e0dad0");
+        contentPanel.getChildren().add(integrationSeparator);
+
+        //integration <3
+        Label integrationLabel = new Label("Integration:");
+        integrationLabel.setStyle("-fx-text-fill: #e0dad0;");
+        integrationLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(integrationLabel);
+
+        Label integrationMethodLabel = new Label("Integration Method:");
+        integrationMethodLabel.setStyle("-fx-text-fill: #e0dad0;");
+        integrationMethodLabel.setFont(Font.font("Book Antiqua", 18));
+        contentPanel.getChildren().add(integrationMethodLabel);
+
+        // ComboBox for integration method
+        ComboBox<String> integrationComboBox = new ComboBox<>();
+        integrationComboBox.getItems().addAll(Body.getIntegrationMethods());
+        integrationComboBox.setValue(Body.getIntegrationMethod());
+        //System.out.println(Body.getIntegrationMethod());
+        integrationComboBox.setStyle(
+                "-fx-background-color: #e0dad0; " +
+                        "-fx-text-fill: #140d07; " +
+                        "-fx-font-size: 16px; " +
+                        "-fx-font-family: 'Book Antiqua'; " +
+                        "-fx-pref-width: 200;"
+        );
+
+        integrationComboBox.setOnAction(e -> {
+            String temp = "";
+            temp = integrationComboBox.getValue();
+            //System.out.println("Integration method changed to: " + temp);
+
+            Body.setIntegrationMethod(temp);
+        });
+
+        contentPanel.getChildren().add(integrationComboBox);
+
+        //timestep! (i may have copy-pasted the styles from mass)
+        String timeEnabledInputStyle = "-fx-background-color: #e0dad0; -fx-text-fill: #140d07; -fx-font-size: 18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80;";
+        String timeDisabledInputStyle = "-fx-background-color:#807b7e; -fx-text-fill:#140d07; -fx-font-size:18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80; -fx-opacity: 1.0";
+        String timeErrorInputStyle = "-fx-background-color:#ffcccc; -fx-text-fill:#cc0000; -fx-font-size: 18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#cc0000;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80;";
+
+        //like, I straight up forgot mass was a thing, somehow
+        HBox timestepHBox = new HBox(10);
+
+        Label timestepLabel = new Label("Timestep:");
+        timestepLabel.setStyle("-fx-text-fill: #e0dad0;");
+        timestepLabel.setFont(Font.font("Book Antiqua", 18));
+
+        TextField timestepInput = new TextField();
+        timestepInput.setText("" + Body.getTimeStep());
+        if (!isPlaying) {
+            timestepInput.setStyle(timeEnabledInputStyle);
+            timestepInput.setDisable(false);
+
+            timestepInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(timestepInput.getText());
+                        Body.setTimestep(value);
+                        timestepInput.setStyle(timeEnabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        timestepInput.setStyle(timeErrorInputStyle);
+                    }
+                }
+            });
+        } else {
+            timestepInput.setStyle(timeDisabledInputStyle);
+            timestepInput.setDisable(true);
+        }
+
+        timestepHBox.getChildren().addAll(timestepLabel, timestepInput);
+        timestepHBox.setAlignment(Pos.CENTER_LEFT);
+        contentPanel.getChildren().add(timestepHBox);
     }
 
     private void displayBodiesContent(VBox contentPanel) {
@@ -522,6 +672,14 @@ public class ThreeBodyApplication extends Application {
                 contentPanel.getChildren().add(bodyVBox);
             }
         }
+
+        //trails happened later, so tacking this on...
+        while (bodyTrails.size() < bodies.size()) {
+            bodyTrails.add(new ArrayList<>());
+        }
+        while (bodyTrails.size() > bodies.size()) {
+            bodyTrails.remove(bodyTrails.size() - 1);
+        }
     }
 
     private VBox displayBodyInfo(int bodyNum) {
@@ -576,7 +734,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         massInput.setStyle(massErrorInputStyle);
-                        massInput.setText("" + bodies.get(bodyNum).getMass());
+                        //massInput.setText("" + bodies.get(bodyNum).getMass());
                     }
                 }
             });
@@ -618,7 +776,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         xPosInput.setStyle(errorInputStyle);
-                        xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
+                        //xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
                     }
                 }
             });
@@ -648,7 +806,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         yPosInput.setStyle(errorInputStyle);
-                        yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
+                        //yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
                     }
                 }
             });
@@ -678,7 +836,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         zPosInput.setStyle(errorInputStyle);
-                        zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
+                        //zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
                     }
                 }
             });
@@ -720,7 +878,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         xVelocityInput.setStyle(errorInputStyle);
-                        xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
+                        //xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
                     }
                 }
             });
@@ -750,7 +908,7 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         yVelocityInput.setStyle(errorInputStyle);
-                        yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
+                        //yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
                     }
                 }
             });
@@ -1007,7 +1165,7 @@ public class ThreeBodyApplication extends Application {
             drawRightControls(rightControls);
         });
 
-        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer,  playButton);
+        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer, playButton);
     }
 
     private void update3D(Group root) {
@@ -1025,7 +1183,7 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void drawSphere(Group root, int bodyNum) {
-        Sphere body = new Sphere (bodies.get(bodyNum).getRadius());
+        Sphere body = new Sphere(bodies.get(bodyNum).getRadius());
 
         double displayScale = 150.0 / 1.496e11;
 

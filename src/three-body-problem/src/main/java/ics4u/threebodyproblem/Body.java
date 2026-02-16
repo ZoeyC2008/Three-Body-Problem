@@ -12,8 +12,8 @@ public class Body {
     private Vector3D acceleration;
     private Vector3D previousAcceleration; //it's for leapfrog
     private Vector3D force;
-    private static String integrationMethod = "leapfrog";
-    private static String[] integrationMethods = {"rk4", "leapfrog", "euler"};
+    private static String integrationMethod = "Leapfrog";
+    private static final String[] INTEGRATION_METHODS = {"Runge-Kutta 4", "Leapfrog", "Euler"};
     private static double timestep = 86400.0;
     private final double GRAVITATIONAL_CONSTANT = 6.67430e-11;
     Color colour;
@@ -62,9 +62,9 @@ public class Body {
 
     public static void integrate(Body[] bodies) {
         switch (Body.integrationMethod) {
-            case "rk4":
+            case "Runge-Kutta 4":
                 //tragically need to work on this later
-            case "leapfrog":
+            case "Leapfrog":
                 //leapfrogIntegration(bodies);
                 for (int i = 0; i < bodies.length; i++) {
                     bodies[i].updateAcceleration(bodies);
@@ -79,7 +79,7 @@ public class Body {
 
                 leapfrogUpdateVelocity(bodies);
                 break;
-            case "euler":
+            case "Euler":
             default:
         }
     }
@@ -193,10 +193,9 @@ public class Body {
     }
 
     public static void setIntegrationMethod(String integrationMethod) {
-        integrationMethod = integrationMethod.toLowerCase();
-        for (int i = 0; i < Body.integrationMethods.length; i++) {
-            if (Body.integrationMethods[i].equals(integrationMethod)) {
-                Body.integrationMethod = integrationMethods[i];
+        for (int i = 0; i < Body.INTEGRATION_METHODS.length; i++) {
+            if (Body.INTEGRATION_METHODS[i].equals(integrationMethod)) {
+                Body.integrationMethod = INTEGRATION_METHODS[i];
             }
         }
     }
@@ -235,6 +234,10 @@ public class Body {
 
     public static String getIntegrationMethod(){
         return Body.integrationMethod.toLowerCase();
+    }
+
+    public static String[] getIntegrationMethods(){
+        return Body.INTEGRATION_METHODS;
     }
 
     public Color getColour() {
