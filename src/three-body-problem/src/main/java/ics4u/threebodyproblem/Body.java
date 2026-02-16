@@ -2,6 +2,8 @@ package ics4u.threebodyproblem;
 
 import javafx.scene.paint.Color;
 
+import java.util.ArrayList;
+
 public class Body {
     private double mass;
     private double radius;
@@ -18,6 +20,7 @@ public class Body {
 
     public Body(){
         this.radius = 20;
+        this.mass = 50;
     }
 
     public Body(Color colour){
@@ -27,6 +30,7 @@ public class Body {
         this.velocity = new Vector3D(0, 0, 0);
         this.acceleration = new Vector3D(0, 0, 0);
         this.force = new Vector3D(0, 0, 0);
+        this.mass = 50;
     }
 
     public Body(double mass, Vector3D position) {
@@ -45,6 +49,14 @@ public class Body {
         this.acceleration = new Vector3D(0, 0, 0);
         this.radius = 20;
 
+    }
+
+    public static void integrate (ArrayList<Body> bodies){
+        Body[] bodiesArray = new Body[bodies.size()];
+        for (int i = 0; i < bodies.size(); i++) {
+            bodiesArray[i] = bodies.get(i);
+        }
+        integrate(bodiesArray);
     }
 
     public static void integrate(Body[] bodies) {

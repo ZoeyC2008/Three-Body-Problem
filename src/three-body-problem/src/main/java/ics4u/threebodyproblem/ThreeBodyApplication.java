@@ -1,5 +1,6 @@
 package ics4u.threebodyproblem;
 
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.event.Event;
 import javafx.fxml.FXMLLoader;
@@ -66,6 +67,10 @@ public class ThreeBodyApplication extends Application {
     private boolean isPlaying = false;
 
     private Group root3D;
+    private VBox contentPanel;
+
+    private AnimationTimer simulationTimer;
+    private long lastUpdate = 0;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -145,8 +150,35 @@ public class ThreeBodyApplication extends Application {
         primaryStage.show();
     }
 
-    private void play(){}
-    private void pause(){}
+    private void setupSimulationLoop() {
+        simulationTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                if (lastUpdate == 0) {
+                    lastUpdate = now;
+                    return;
+                }
+
+                double dt = (now - lastUpdate) / 1_000_000_000.0; // seconds
+                lastUpdate = now;
+
+                if (!bodies.isEmpty()) {
+                    Body.integrate(bodies);
+                }
+                update3D(root3D);
+                drawLeftPaneContent(contentPanel);
+            }
+        };
+    }
+
+    private void play(){
+        setupSimulationLoop();
+        simulationTimer.start();
+    }
+    private void pause(){
+        simulationTimer.stop();
+        lastUpdate = 0;
+    }
 
     private StackPane draw2D() {
         StackPane hud = new StackPane();
@@ -182,7 +214,7 @@ public class ThreeBodyApplication extends Application {
 
 
         // Content panel
-        VBox contentPanel = new VBox(10);
+        contentPanel = new VBox(10);
         contentPanel.setMaxWidth(250);
         contentPanel.setPrefWidth(250);
         contentPanel.setStyle("-fx-background-color: #884000; -fx-padding: 10;");
@@ -197,13 +229,15 @@ public class ThreeBodyApplication extends Application {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         //scrollPane.addEventFilter(ScrollEvent.SCROLL, Event::consume);
-
+        scrollPane.setOnScroll(event -> {
+            event.consume();
+        });
 
         drawLeftPanelTabs(tabColumn, contentPanel);
 
 
         container.getChildren().addAll(scrollPane, tabColumn);
-        container.setOnScroll(Event::consume);
+        //container.setOnScroll(Event::consume);
         return container;
     }
 
@@ -460,14 +494,53 @@ public class ThreeBodyApplication extends Application {
         String disabledInputStyle = "-fx-background-color:#807b7e; -fx-text-fill:#140d07; -fx-font-size:12px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 40; -fx-opacity: 1.0";
         String errorInputStyle = "-fx-background-color:#ffcccc; -fx-text-fill:#cc0000; -fx-font-size: 12px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#cc0000;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 40;";
 
+        //such a pain, I just wanted the mass boxes to have slightly bigger text is all, whatever, it's mostly copy-paste anyway
+        String massEnabledInputStyle = "-fx-background-color: #e0dad0; -fx-text-fill: #140d07; -fx-font-size: 18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80;";
+        String massDisabledInputStyle = "-fx-background-color:#807b7e; -fx-text-fill:#140d07; -fx-font-size:18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#140d07; -fx-border-width: 2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80; -fx-opacity: 1.0";
+        String massErrorInputStyle = "-fx-background-color:#ffcccc; -fx-text-fill:#cc0000; -fx-font-size: 18px; -fx-font-family:'Book Antiqua'; -fx-background-radius:5; -fx-border-color:#cc0000;-fx-border-width:2; -fx-border-radius: 4; -fx-padding: 2; -fx-pref-width: 80;";
+
+        //like, I straight up forgot mass was a thing, somehow
+        HBox massHBox = new HBox(10);
+
+        Label mass = new Label("Mass:");
+        mass.setStyle("-fx-text-fill: #e0dad0;");
+        mass.setFont(Font.font("Book Antiqua", 18));
+
+        TextField massInput = new TextField();
+        massInput.setText("" + bodies.get(bodyNum).getMass());
+        if (!isPlaying) {
+            massInput.setStyle(massEnabledInputStyle);
+            massInput.setDisable(false);
+
+            massInput.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                if (!newValue) {
+                    try {
+                        double value = Double.parseDouble(massInput.getText());
+                        bodies.get(bodyNum).setMass(value);
+                        massInput.setStyle(massEnabledInputStyle);
+                        update3D(root3D);
+                    } catch (NumberFormatException e) {
+                        massInput.setStyle(massErrorInputStyle);
+                        massInput.setText("" + bodies.get(bodyNum).getMass());
+                    }
+                }
+            });
+        } else {
+            massInput.setStyle(massDisabledInputStyle);
+            massInput.setDisable(true);
+        }
+
+        massHBox.getChildren().addAll(mass, massInput);
+        massHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(massHBox);
 
         //positon
-        Label position = new Label("Positon:");
+        Label position = new Label("Position:");
         position.setStyle("-fx-text-fill: #e0dad0;");
         position.setFont(Font.font("Book Antiqua", 18));
         vbox.getChildren().add(position);
 
-        HBox postionHBox = new HBox(10);
+        HBox positionHBox = new HBox(10);
 
         //x
         Label xPosition = new Label("X:");
@@ -489,7 +562,6 @@ public class ThreeBodyApplication extends Application {
                         update3D(root3D);
                     } catch (NumberFormatException e) {
                         xPosInput.setStyle(errorInputStyle);
-                        // Optionally restore old value
                         xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
                     }
                 }
@@ -557,9 +629,9 @@ public class ThreeBodyApplication extends Application {
             zPosInput.setDisable(true);
         }
 
-        postionHBox.getChildren().addAll(xPosition, xPosInput, yPosition, yPosInput, zPosition, zPosInput);
-        postionHBox.setAlignment(Pos.CENTER_LEFT);
-        vbox.getChildren().add(postionHBox);
+        positionHBox.getChildren().addAll(xPosition, xPosInput, yPosition, yPosInput, zPosition, zPosInput);
+        positionHBox.setAlignment(Pos.CENTER_LEFT);
+        vbox.getChildren().add(positionHBox);
 
         //velocity (i swear this is all important for when the user is allowed to set up their own thing)
         Label velocity = new Label("Velocity:");
@@ -859,6 +931,7 @@ public class ThreeBodyApplication extends Application {
             if (isPlaying) {
                 isPlaying = false;
                 pause();
+                drawLeftPaneContent(contentPanel);
             } else {
                 isPlaying = true;
                 play();
