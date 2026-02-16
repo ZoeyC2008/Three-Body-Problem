@@ -197,6 +197,14 @@ public class ThreeBodyApplication extends Application {
         lastUpdate = 0;
     }
 
+    private void reset(){
+
+    }
+
+    private void trailsButton(){
+
+    }
+
     private void updateBodiesContent() {
         if (!controlPanelSetting.equals("bodies")) return;
 
@@ -1005,7 +1013,7 @@ public class ThreeBodyApplication extends Application {
         }
         //all the images
         //order is alphabetical (aka the order they show up in on the right)
-        Image[] images = new Image[12];
+        Image[] images = new Image[14];
         images[0] = (new Image(getClass().getResourceAsStream("/images/camera_reset_clicked.png")));
         images[1] = (new Image(getClass().getResourceAsStream("/images/camera_reset_unclicked.png")));
         images[2] = (new Image(getClass().getResourceAsStream("/images/drag_clicked.png")));
@@ -1018,7 +1026,8 @@ public class ThreeBodyApplication extends Application {
         images[9] = (new Image(getClass().getResourceAsStream("/images/play_unclicked.png")));
         images[10] = (new Image(getClass().getResourceAsStream("/images/reset_clicked.png")));
         images[11] = (new Image(getClass().getResourceAsStream("/images/reset_unclicked.png")));
-
+        images[12] = new Image(getClass().getResourceAsStream("/images/trails_clicked.png"));
+        images[13] = new Image(getClass().getResourceAsStream("/images/trails_unclicked.png"));
 
         //camera reset button
         Button cameraResetButton = new Button();
@@ -1165,7 +1174,50 @@ public class ThreeBodyApplication extends Application {
             drawRightControls(rightControls);
         });
 
-        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer, playButton);
+        //reset button
+        Button resetButton = new Button();
+        //icon
+        ImageView resetIcon = new ImageView(images[11]);
+        resetIcon.setPreserveRatio(true);
+        resetIcon.setFitWidth(100);
+        resetIcon.setFitHeight(100);
+        //button settings
+        resetButton.setStyle("-fx-background-color: transparent;");
+        resetButton.setGraphic(resetIcon);
+        //animations when hovering
+        resetButton.setOnMouseEntered(e -> {
+            resetIcon.setImage(images[10]);
+        });
+        resetButton.setOnMouseExited(e -> {
+            resetIcon.setImage(images[11]);
+        });
+        //on click, stuff happens
+        resetButton.setOnAction(e -> {
+            reset();
+        });
+
+        Button trailsButton = new Button();
+        //icon
+        ImageView trailsIcon = new ImageView(images[13]);
+        trailsIcon.setPreserveRatio(true);
+        trailsIcon.setFitWidth(100);
+        trailsIcon.setFitHeight(100);
+        //button settings
+        trailsButton.setStyle("-fx-background-color: transparent;");
+        trailsButton.setGraphic(trailsIcon);
+        //animations when hovering
+        trailsButton.setOnMouseEntered(e -> {
+            trailsIcon.setImage(images[12]);
+        });
+        trailsButton.setOnMouseExited(e -> {
+            trailsIcon.setImage(images[13]);
+        });
+        //on click, stuff happens
+        trailsButton.setOnAction(e -> {
+            trailsButton();
+        });
+
+        rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer, trailsButton, resetButton, playButton);
     }
 
     private void update3D(Group root) {
