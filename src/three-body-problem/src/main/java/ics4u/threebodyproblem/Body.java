@@ -5,7 +5,7 @@ import javafx.scene.paint.Color;
 import java.util.ArrayList;
 
 public class Body {
-    private double mass;
+    private double mass; //needs to be scientific notation
     private double radius;
     private Vector3D position;
     private Vector3D velocity;
@@ -14,7 +14,7 @@ public class Body {
     private Vector3D force;
     private static String integrationMethod = "leapfrog";
     private static String[] integrationMethods = {"rk4", "leapfrog", "euler"};
-    private static double timestep = 2.0e-5;
+    private static double timestep = 86400.0;
     private final double GRAVITATIONAL_CONSTANT = 6.67430e-11;
     Color colour;
 
@@ -29,8 +29,9 @@ public class Body {
         this.position = new Vector3D(0, 0, 0);
         this.velocity = new Vector3D(0, 0, 0);
         this.acceleration = new Vector3D(0, 0, 0);
+        this.previousAcceleration = new Vector3D(0, 0, 0);
         this.force = new Vector3D(0, 0, 0);
-        this.mass = 50;
+        this.mass = 5.97e24;
     }
 
     public Body(double mass, Vector3D position) {
@@ -241,7 +242,7 @@ public class Body {
     }
 
     private void cacheAcceleration() {
-        this.previousAcceleration = this.acceleration;
+        this.previousAcceleration = new Vector3D(this.acceleration);
     }
 
     public Vector3D getPreviousAcceleration() {

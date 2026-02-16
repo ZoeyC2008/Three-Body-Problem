@@ -71,6 +71,18 @@ public class ThreeBodyApplication extends Application {
 
     private AnimationTimer simulationTimer;
     private long lastUpdate = 0;
+    private double timeScale = 1.0;
+
+    //refactoring some stuff so that i can update values on the left panel
+    private ArrayList<TextField> positionXFields = new ArrayList<>();
+    private ArrayList<TextField> positionYFields = new ArrayList<>();
+    private ArrayList<TextField> positionZFields = new ArrayList<>();
+    private ArrayList<TextField> velocityXFields = new ArrayList<>();
+    private ArrayList<TextField> velocityYFields = new ArrayList<>();
+    private ArrayList<TextField> velocityZFields = new ArrayList<>();
+    private ArrayList<TextField> accelerationXFields = new ArrayList<>();
+    private ArrayList<TextField> accelerationYFields = new ArrayList<>();
+    private ArrayList<TextField> accelerationZFields = new ArrayList<>();
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -166,7 +178,8 @@ public class ThreeBodyApplication extends Application {
                     Body.integrate(bodies);
                 }
                 update3D(root3D);
-                drawLeftPaneContent(contentPanel);
+                //drawLeftPaneContent(contentPanel);
+                updateBodiesContent();
             }
         };
     }
@@ -178,6 +191,38 @@ public class ThreeBodyApplication extends Application {
     private void pause(){
         simulationTimer.stop();
         lastUpdate = 0;
+    }
+
+    private void updateBodiesContent(){
+        if (!controlPanelSetting.equals("bodies")) return;
+
+        // Make sure we have the right number of fields
+        if (positionXFields.size() != bodies.size()) return;
+
+
+
+        // Update each body's display values
+        for (int i = 0; i < bodies.size(); i++) {
+            Body body = bodies.get(i);
+
+            //System.out.println("Body " + i + " - X: " + body.getPosition().getXValue() + " Y: " + body.getVelocity().getYValue());
+            //System.out.println("UPDATE UI - Body " + i + " position X: " + body.getPosition().getXValue());
+
+            // Update position fields
+            positionXFields.get(i).setText("" + body.getPosition().getXValue());
+            positionYFields.get(i).setText("" + body.getPosition().getYValue());
+            positionZFields.get(i).setText("" + body.getPosition().getZValue());
+
+            // Update velocity fields
+            velocityXFields.get(i).setText("" + body.getVelocity().getXValue());
+            velocityYFields.get(i).setText("" + body.getVelocity().getYValue());
+            velocityZFields.get(i).setText("" + body.getVelocity().getZValue());
+
+            // Update acceleration fields
+            accelerationXFields.get(i).setText("" + body.getAcceleration().getXValue());
+            accelerationYFields.get(i).setText("" + body.getAcceleration().getYValue());
+            accelerationZFields.get(i).setText("" + body.getAcceleration().getZValue());
+        }
     }
 
     private StackPane draw2D() {
@@ -354,6 +399,16 @@ public class ThreeBodyApplication extends Application {
         if (!contentPanel.getChildren().isEmpty()) {
             contentPanel.getChildren().clear();
         }
+
+        positionXFields.clear();
+        positionYFields.clear();
+        positionZFields.clear();
+        velocityXFields.clear();
+        velocityYFields.clear();
+        velocityZFields.clear();
+        accelerationXFields.clear();
+        accelerationYFields.clear();
+        accelerationZFields.clear();
 
         //title
         Label title = new Label("On Bodies");
@@ -548,6 +603,7 @@ public class ThreeBodyApplication extends Application {
         xPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField xPosInput = new TextField();
+        positionXFields.add(xPosInput);
         xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
         if (!isPlaying) {
             xPosInput.setStyle(enabledInputStyle);
@@ -577,6 +633,7 @@ public class ThreeBodyApplication extends Application {
         yPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField yPosInput = new TextField();
+        positionYFields.add(yPosInput);
         yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
         if (!isPlaying) {
             yPosInput.setStyle(enabledInputStyle);
@@ -606,6 +663,7 @@ public class ThreeBodyApplication extends Application {
         zPosition.setFont(Font.font("Book Antiqua", 12));
 
         TextField zPosInput = new TextField();
+        positionZFields.add(zPosInput);
         zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
         if (!isPlaying) {
             zPosInput.setStyle(enabledInputStyle);
@@ -647,6 +705,7 @@ public class ThreeBodyApplication extends Application {
         xVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField xVelocityInput = new TextField();
+        velocityXFields.add(xVelocityInput);
         xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
         if (!isPlaying) {
             xVelocityInput.setStyle(enabledInputStyle);
@@ -676,6 +735,7 @@ public class ThreeBodyApplication extends Application {
         yVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField yVelocityInput = new TextField();
+        velocityYFields.add(yVelocityInput);
         yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
         if (!isPlaying) {
             yVelocityInput.setStyle(enabledInputStyle);
@@ -705,6 +765,7 @@ public class ThreeBodyApplication extends Application {
         zVelocity.setFont(Font.font("Book Antiqua", 12));
 
         TextField zVelocityInput = new TextField();
+        velocityZFields.add(zVelocityInput);
         zVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getZValue());
         if (!isPlaying) {
             zVelocityInput.setStyle(enabledInputStyle);
@@ -745,6 +806,8 @@ public class ThreeBodyApplication extends Application {
         xAcceleration.setFont(Font.font("Book Antiqua", 12));
 
         TextField xAccelerationDisplay = new TextField();
+        accelerationXFields.add(xAccelerationDisplay);
+        xAccelerationDisplay.setText("" + bodies.get(bodyNum).getAcceleration().getXValue());
         xAccelerationDisplay.setStyle(disabledInputStyle);
         xAccelerationDisplay.setDisable(true);
 
@@ -754,6 +817,8 @@ public class ThreeBodyApplication extends Application {
         yAcceleration.setFont(Font.font("Book Antiqua", 12));
 
         TextField yAccelerationDisplay = new TextField();
+        accelerationYFields.add(yAccelerationDisplay);
+        yAccelerationDisplay.setText("" + bodies.get(bodyNum).getAcceleration().getYValue());
         yAccelerationDisplay.setStyle(disabledInputStyle);
         yAccelerationDisplay.setDisable(true);
 
@@ -764,6 +829,8 @@ public class ThreeBodyApplication extends Application {
         zAcceleration.setFont(Font.font("Book Antiqua", 12));
 
         TextField zAccelerationDisplay = new TextField();
+        accelerationZFields.add(zAccelerationDisplay);
+        zAccelerationDisplay.setText("" + bodies.get(bodyNum).getAcceleration().getZValue());
         zAccelerationDisplay.setStyle(disabledInputStyle);
         zAccelerationDisplay.setDisable(true);
 
@@ -935,6 +1002,7 @@ public class ThreeBodyApplication extends Application {
             } else {
                 isPlaying = true;
                 play();
+                drawLeftPaneContent(contentPanel);
             }
             drawRightControls(rightControls);
         });
@@ -959,9 +1027,11 @@ public class ThreeBodyApplication extends Application {
     private void drawSphere(Group root, int bodyNum) {
         Sphere body = new Sphere (bodies.get(bodyNum).getRadius());
 
-        body.setTranslateX(bodies.get(bodyNum).getPosition().getXValue());
-        body.setTranslateY(bodies.get(bodyNum).getPosition().getYValue());
-        body.setTranslateZ(bodies.get(bodyNum).getPosition().getZValue());
+        double displayScale = 150.0 / 1.496e11;
+
+        body.setTranslateX(bodies.get(bodyNum).getPosition().getXValue() * displayScale);
+        body.setTranslateY(bodies.get(bodyNum).getPosition().getYValue() * displayScale);
+        body.setTranslateZ(bodies.get(bodyNum).getPosition().getZValue() * displayScale);
 
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(bodies.get(bodyNum).getColour());
