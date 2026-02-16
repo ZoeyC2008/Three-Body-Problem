@@ -86,6 +86,10 @@ public class ThreeBodyApplication extends Application {
     private ArrayList<TextField> accelerationZFields = new ArrayList<>();
 
     private ArrayList<ArrayList<Point3D>> bodyTrails = new ArrayList<>();
+    private double displayScale = 150.0 / 1.496e11;
+    private boolean trailsMode = false;
+
+    private SimulationState initialState = new SimulationState();
 
     @Override
     public void start(Stage primaryStage) throws IOException {
@@ -178,6 +182,17 @@ public class ThreeBodyApplication extends Application {
                 lastUpdate = now;
 
                 if (!bodies.isEmpty()) {
+                    //trails!
+                    for (int i = 0; i < bodies.size(); i++) {
+                        Vector3D pos = bodies.get(i).getPosition();
+                        bodyTrails.get(i).add(new Point3D(
+                                pos.getXValue(),
+                                pos.getYValue(),
+                                pos.getZValue()
+                        ));
+                    }
+
+                    //integration
                     Body.integrate(bodies);
                 }
                 update3D(root3D);
@@ -188,6 +203,10 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void play() {
+        for (ArrayList<Point3D> trail : bodyTrails) {
+            trail.clear();
+        }
+
         setupSimulationLoop();
         simulationTimer.start();
     }
@@ -197,12 +216,23 @@ public class ThreeBodyApplication extends Application {
         lastUpdate = 0;
     }
 
-    private void reset(){
+    private void reset() {
 
     }
 
-    private void trailsButton(){
+    private void trailsButton(Group root) {
+        if (!root.getChildren().isEmpty()) {
+            root.getChildren().clear();
+        }
 
+        if (!bodies.isEmpty()) {
+
+            for (int i = 0; i < bodies.size(); i++) {
+                drawTrail(root, i);
+            }
+        }
+
+        pause();
     }
 
     private void updateBodiesContent() {
@@ -626,6 +656,9 @@ public class ThreeBodyApplication extends Application {
                 bodies.remove(bodies.size() - 1);
                 displayBodiesContent(contentPanel);
                 update3D(root3D);
+
+                initialState.setNumBodies(bodies.size());
+                initialState.setBodies(bodies);
             }
         });
 
@@ -655,6 +688,9 @@ public class ThreeBodyApplication extends Application {
                 bodies.add(new Body(BODY_DEFAULT_COLOURS[numBodies]));
                 displayBodiesContent(contentPanel);
                 update3D(root3D);
+
+                initialState.setNumBodies(bodies.size());
+                initialState.setBodies(bodies);
             }
         });
 
@@ -740,6 +776,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).setMass(value);
                         massInput.setStyle(massEnabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         massInput.setStyle(massErrorInputStyle);
                         //massInput.setText("" + bodies.get(bodyNum).getMass());
@@ -782,6 +821,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getPosition().setXValue(value);
                         xPosInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         xPosInput.setStyle(errorInputStyle);
                         //xPosInput.setText("" + bodies.get(bodyNum).getPosition().getXValue());
@@ -812,6 +854,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getPosition().setYValue(value);
                         yPosInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         yPosInput.setStyle(errorInputStyle);
                         //yPosInput.setText("" + bodies.get(bodyNum).getPosition().getYValue());
@@ -842,6 +887,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getPosition().setZValue(value);
                         zPosInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         zPosInput.setStyle(errorInputStyle);
                         //zPosInput.setText("" + bodies.get(bodyNum).getPosition().getZValue());
@@ -884,6 +932,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getVelocity().setXValue(value);
                         xVelocityInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         xVelocityInput.setStyle(errorInputStyle);
                         //xVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getXValue());
@@ -914,6 +965,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getVelocity().setYValue(value);
                         yVelocityInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         yVelocityInput.setStyle(errorInputStyle);
                         //yVelocityInput.setText("" + bodies.get(bodyNum).getVelocity().getYValue());
@@ -944,6 +998,9 @@ public class ThreeBodyApplication extends Application {
                         bodies.get(bodyNum).getVelocity().setZValue(value);
                         zVelocityInput.setStyle(enabledInputStyle);
                         update3D(root3D);
+
+                        initialState.setNumBodies(bodies.size());
+                        initialState.setBodies(bodies);
                     } catch (NumberFormatException e) {
                         zVelocityInput.setStyle(errorInputStyle);
                     }
@@ -1162,6 +1219,7 @@ public class ThreeBodyApplication extends Application {
             }
         });
         playButton.setOnAction(e -> {
+            trailsMode = false;
             if (isPlaying) {
                 isPlaying = false;
                 pause();
@@ -1207,14 +1265,30 @@ public class ThreeBodyApplication extends Application {
         trailsButton.setGraphic(trailsIcon);
         //animations when hovering
         trailsButton.setOnMouseEntered(e -> {
-            trailsIcon.setImage(images[12]);
+            if (trailsMode) {
+                trailsIcon.setImage(images[13]);
+            } else {
+                trailsIcon.setImage(images[12]);
+            }
         });
         trailsButton.setOnMouseExited(e -> {
-            trailsIcon.setImage(images[13]);
+            if (trailsMode) {
+                trailsIcon.setImage(images[12]);
+            } else {
+                trailsIcon.setImage(images[13]);
+            }
         });
         //on click, stuff happens
         trailsButton.setOnAction(e -> {
-            trailsButton();
+            if (trailsMode) {
+                trailsMode = false;
+                update3D(root3D);
+            } else {
+                trailsMode = true;
+                trailsButton(root3D);
+                isPlaying = false;
+            }
+            drawRightControls(rightControls);
         });
 
         rightControls.getChildren().addAll(cameraResetButton, dragButton, panButton, spacer, trailsButton, resetButton, playButton);
@@ -1228,16 +1302,45 @@ public class ThreeBodyApplication extends Application {
         drawPlanes(root);
 
         if (!bodies.isEmpty()) {
+            if (trailsVisible) {
+                for (int i = 0; i < bodies.size(); i++) {
+                    drawTrail(root, i);
+                }
+            }
+
             for (int i = 0; i < bodies.size(); i++) {
                 drawSphere(root, i);
+
             }
+        }
+    }
+
+    private void drawTrail(Group root, int bodyNum) {
+
+        ArrayList<Point3D> trail = bodyTrails.get(bodyNum);
+        if (trail.size() < 2) {
+            return;
+        }
+
+        // Create lines connecting trail points
+        for (int i = 0; i < trail.size() - 1; i++) {
+            Point3D p = trail.get(i);
+
+            Sphere trailPoint = new Sphere(1.2);
+            trailPoint.setTranslateX(p.getX() * displayScale);
+            trailPoint.setTranslateY(p.getY() * displayScale);
+            trailPoint.setTranslateZ(p.getZ() * displayScale);
+
+            Color bodyColor = bodies.get(bodyNum).getColour();
+            PhongMaterial material = new PhongMaterial(bodyColor);
+            trailPoint.setMaterial(material);
+
+            root.getChildren().add(trailPoint);
         }
     }
 
     private void drawSphere(Group root, int bodyNum) {
         Sphere body = new Sphere(bodies.get(bodyNum).getRadius());
-
-        double displayScale = 150.0 / 1.496e11;
 
         body.setTranslateX(bodies.get(bodyNum).getPosition().getXValue() * displayScale);
         body.setTranslateY(bodies.get(bodyNum).getPosition().getYValue() * displayScale);

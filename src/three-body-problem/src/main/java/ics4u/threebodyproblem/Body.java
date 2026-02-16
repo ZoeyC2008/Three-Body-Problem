@@ -14,7 +14,7 @@ public class Body {
     private Vector3D force;
     private static String integrationMethod = "Leapfrog";
     private static final String[] INTEGRATION_METHODS = {"Runge-Kutta 4", "Leapfrog", "Euler"};
-    private static double timestep = 86400.0;
+    private static double timestep = 864000.0;
     private final double GRAVITATIONAL_CONSTANT = 6.67430e-11;
     Color colour;
 
@@ -50,6 +50,17 @@ public class Body {
         this.acceleration = new Vector3D(0, 0, 0);
         this.radius = 20;
 
+    }
+
+    public Body (Body body){
+        this.mass = body.getMass();
+        this.radius = body.getRadius();
+        this.position = new Vector3D(body.getPosition());
+        this.velocity = new Vector3D(body.getVelocity());
+        this.acceleration = new Vector3D(body.getAcceleration());
+        this.previousAcceleration = new Vector3D(body.getPreviousAcceleration());
+        this.colour = body.getColour();
+        this.force = new Vector3D(body.getForce());
     }
 
     public static void integrate (ArrayList<Body> bodies){
