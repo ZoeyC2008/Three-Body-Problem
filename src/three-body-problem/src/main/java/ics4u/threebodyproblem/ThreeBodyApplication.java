@@ -217,7 +217,23 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void reset() {
+        if (initialState == null || initialState.getBodies() == null) {
+            return;
+        }
 
+        this.bodies.clear();
+        if (!(initialState.getNumBodies() == 0)){
+            for (int i = 0; i < initialState.getBodies().size(); i++) {
+                this.bodies.add(new Body(initialState.getBodies().get(i)));
+            }
+        }
+
+        for (ArrayList<Point3D> trail : bodyTrails) {
+            trail.clear();
+        }
+
+        update3D(root3D);
+        drawLeftPaneContent(contentPanel);
     }
 
     private void trailsButton(Group root) {

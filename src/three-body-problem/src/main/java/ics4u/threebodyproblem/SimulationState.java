@@ -7,13 +7,10 @@ public class SimulationState {
     private ArrayList<Body> bodies;
 
     public SimulationState() {
-
+        this.numBodies = 0;
+        this.bodies = new ArrayList<>();
     }
 
-    public SimulationState(int numBodies, ArrayList<Body> bodies) {
-        this.numBodies = numBodies;
-        this.bodies = bodies;
-    }
 
     public void setNumBodies(int numBodies) {
         this.numBodies = numBodies;
