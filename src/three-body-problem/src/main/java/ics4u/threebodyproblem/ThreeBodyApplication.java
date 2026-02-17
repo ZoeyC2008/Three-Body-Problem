@@ -91,6 +91,13 @@ public class ThreeBodyApplication extends Application {
 
     private SimulationState initialState = new SimulationState();
 
+    //for slideshow
+    private boolean slideshowActive = false;
+    private int currentSlide = 0;
+    private Image[] slideImages;
+    private ImageView slideImageView;
+    private StackPane slideshowOverlay;
+
     @Override
     public void start(Stage primaryStage) throws IOException {
 
@@ -110,6 +117,11 @@ public class ThreeBodyApplication extends Application {
         StackPane hud = draw2D();
 
         StackPane root = new StackPane(subScene3D, hud);
+
+        //slideshow time!
+        loadSlideImages();
+        slideshowOverlay = createSlideshowOverlay();
+        root.getChildren().add(slideshowOverlay);
 
         root.setOnMousePressed(event -> {
             mouseX = event.getSceneX();
@@ -163,10 +175,87 @@ public class ThreeBodyApplication extends Application {
             updateCameraPosition();
         });
 
+
         Scene scene = new Scene(root, frameLength, frameWidth);
+
+
         primaryStage.setTitle("Three Body Problem");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void startSlideshow() {
+        if (slideImages == null || slideImages.length == 0) {
+            return;
+        }
+
+        slideshowActive = true;
+        //currentSlide = 0;
+        slideImageView.setImage(slideImages[currentSlide]);
+        slideshowOverlay.setVisible(true);
+        slideshowOverlay.requestFocus();
+    }
+
+    private StackPane createSlideshowOverlay() {
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: #000000;");
+        overlay.setVisible(false);
+
+        // ImageView for the slide
+        slideImageView = new ImageView();
+        slideImageView.setPreserveRatio(true);
+        slideImageView.setFitWidth(frameLength);
+        slideImageView.setFitHeight(frameLength);
+
+        overlay.getChildren().add(slideImageView);
+
+        overlay.setOnMouseClicked(e -> {
+            overlay.requestFocus();
+            //System.out.println("clicked on the slides");
+        });
+
+        //key events
+        overlay.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ESCAPE:
+                    slideshowActive = false;
+                    overlay.setVisible(false);
+                    controlPanelSetting = "general";
+                    drawLeftPaneContent(contentPanel);
+                    //System.out.println("escaped on the slides");
+                    break;
+                case LEFT:
+                    if (currentSlide > 0) {
+                        currentSlide--;
+                        slideImageView.setImage(slideImages[currentSlide]);
+                        //System.out.println("LEFT! on the slides");
+                    }
+                    break;
+                case RIGHT:
+                    if (currentSlide < slideImages.length - 1) {
+                        currentSlide++;
+                        slideImageView.setImage(slideImages[currentSlide]);
+                        //System.out.println("RIGHT! on the slides");
+                    }
+                    break;
+            }
+            event.consume(); // Consume the event
+        });
+
+        return overlay;
+    }
+
+    private void loadSlideImages() {
+        slideImages = new Image[8];
+
+        slideImages[0] = new Image(getClass().getResourceAsStream("/slides/slide1.png"));
+        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/slide2.png"));
+        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/slide3.png"));
+        slideImages[3] = new Image(getClass().getResourceAsStream("/slides/slide4.png"));
+        slideImages[4] = new Image(getClass().getResourceAsStream("/slides/slide5.png"));
+        slideImages[5] = new Image(getClass().getResourceAsStream("/slides/slide6.png"));
+        slideImages[6] = new Image(getClass().getResourceAsStream("/slides/slide7.png"));
+        slideImages[7] = new Image(getClass().getResourceAsStream("/slides/slide8.png"));
     }
 
     private void setupSimulationLoop() {
@@ -222,7 +311,7 @@ public class ThreeBodyApplication extends Application {
         }
 
         this.bodies.clear();
-        if (!(initialState.getNumBodies() == 0)){
+        if (!(initialState.getNumBodies() == 0)) {
             for (int i = 0; i < initialState.getBodies().size(); i++) {
                 this.bodies.add(new Body(initialState.getBodies().get(i)));
             }
@@ -421,9 +510,7 @@ public class ThreeBodyApplication extends Application {
         });
 
         tabs[3].setOnAction(e -> {
-            controlPanelSetting = controlPanelSettings[3];
-            drawLeftPanelTabs(tabColumn, contentPanel);
-            drawLeftPaneContent(contentPanel);
+            startSlideshow();
         });
     }
 
@@ -542,6 +629,38 @@ public class ThreeBodyApplication extends Application {
         unitsInfo.setStyle("-fx-text-fill: #e0dad0;");
 
         contentPanel.getChildren().add(unitsInfo);
+
+        Separator separator4 = new Separator(Orientation.HORIZONTAL);
+        separator4.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator4);
+
+        Label slidesLabel = new Label("On Slides:");
+        slidesLabel.setFont(Font.font("Book Antiqua", 24));
+        slidesLabel.setWrapText(true);
+        slidesLabel.setStyle("-fx-text-fill: #e0dad0;");
+        contentPanel.getChildren().add(slidesLabel);
+
+        VBox slidesList = new VBox(5);
+
+        for (String item : new String[]{
+                "Escape to go back to the simulation",
+                "Left and right arrow keys to control the slide itself"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            slidesList.getChildren().add(bulletItem);
+        }
+
+        contentPanel.getChildren().add(slidesList);
     }
 
     private void displaySettingsContent(VBox contentPanel) {
