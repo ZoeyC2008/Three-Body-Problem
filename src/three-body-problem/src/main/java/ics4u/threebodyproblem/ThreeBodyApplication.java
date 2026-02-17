@@ -27,8 +27,8 @@ import java.util.Objects;
 
 public class ThreeBodyApplication extends Application {
     int scale = 100;
-    int frameLength = 1250;
-    int frameWidth = 750;
+    int frameLength = 1280;
+    int frameWidth = 720;
 
     double gridSize = 700;
     double spacing = 50;
@@ -60,7 +60,7 @@ public class ThreeBodyApplication extends Application {
 
     //control panel settings
     private String controlPanelSetting = "general";
-    private String[] controlPanelSettings = {"general", "bodies", "pre-sets", "settings", "slides"};
+    private String[] controlPanelSettings = {"general", "bodies", "settings", "slides"};
 
     //it's so bodies time
     private ArrayList<Body> bodies = new ArrayList<Body>();
@@ -91,6 +91,13 @@ public class ThreeBodyApplication extends Application {
 
     private SimulationState initialState = new SimulationState();
 
+    //for slideshow
+    private boolean slideshowActive = false;
+    private int currentSlide = 0;
+    private Image[] slideImages;
+    private ImageView slideImageView;
+    private StackPane slideshowOverlay;
+
     @Override
     public void start(Stage primaryStage) throws IOException {
 
@@ -110,6 +117,11 @@ public class ThreeBodyApplication extends Application {
         StackPane hud = draw2D();
 
         StackPane root = new StackPane(subScene3D, hud);
+
+        //slideshow time!
+        loadSlideImages();
+        slideshowOverlay = createSlideshowOverlay();
+        root.getChildren().add(slideshowOverlay);
 
         root.setOnMousePressed(event -> {
             mouseX = event.getSceneX();
@@ -163,10 +175,87 @@ public class ThreeBodyApplication extends Application {
             updateCameraPosition();
         });
 
+
         Scene scene = new Scene(root, frameLength, frameWidth);
+
+
         primaryStage.setTitle("Three Body Problem");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void startSlideshow() {
+        if (slideImages == null || slideImages.length == 0) {
+            return;
+        }
+
+        slideshowActive = true;
+        //currentSlide = 0;
+        slideImageView.setImage(slideImages[currentSlide]);
+        slideshowOverlay.setVisible(true);
+        slideshowOverlay.requestFocus();
+    }
+
+    private StackPane createSlideshowOverlay() {
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: #000000;");
+        overlay.setVisible(false);
+
+        // ImageView for the slide
+        slideImageView = new ImageView();
+        slideImageView.setPreserveRatio(true);
+        slideImageView.setFitWidth(frameLength);
+        slideImageView.setFitHeight(frameLength);
+
+        overlay.getChildren().add(slideImageView);
+
+        overlay.setOnMouseClicked(e -> {
+            overlay.requestFocus();
+            //System.out.println("clicked on the slides");
+        });
+
+        //key events
+        overlay.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ESCAPE:
+                    slideshowActive = false;
+                    overlay.setVisible(false);
+                    controlPanelSetting = "general";
+                    drawLeftPaneContent(contentPanel);
+                    //System.out.println("escaped on the slides");
+                    break;
+                case LEFT:
+                    if (currentSlide > 0) {
+                        currentSlide--;
+                        slideImageView.setImage(slideImages[currentSlide]);
+                        //System.out.println("LEFT! on the slides");
+                    }
+                    break;
+                case RIGHT:
+                    if (currentSlide < slideImages.length - 1) {
+                        currentSlide++;
+                        slideImageView.setImage(slideImages[currentSlide]);
+                        //System.out.println("RIGHT! on the slides");
+                    }
+                    break;
+            }
+            event.consume(); // Consume the event
+        });
+
+        return overlay;
+    }
+
+    private void loadSlideImages() {
+        slideImages = new Image[8];
+
+        slideImages[0] = new Image(getClass().getResourceAsStream("/slides/slide1.png"));
+        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/slide2.png"));
+        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/slide3.png"));
+        slideImages[3] = new Image(getClass().getResourceAsStream("/slides/slide4.png"));
+        slideImages[4] = new Image(getClass().getResourceAsStream("/slides/slide5.png"));
+        slideImages[5] = new Image(getClass().getResourceAsStream("/slides/slide6.png"));
+        slideImages[6] = new Image(getClass().getResourceAsStream("/slides/slide7.png"));
+        slideImages[7] = new Image(getClass().getResourceAsStream("/slides/slide8.png"));
     }
 
     private void setupSimulationLoop() {
@@ -222,7 +311,7 @@ public class ThreeBodyApplication extends Application {
         }
 
         this.bodies.clear();
-        if (!(initialState.getNumBodies() == 0)){
+        if (!(initialState.getNumBodies() == 0)) {
             for (int i = 0; i < initialState.getBodies().size(); i++) {
                 this.bodies.add(new Body(initialState.getBodies().get(i)));
             }
@@ -231,6 +320,9 @@ public class ThreeBodyApplication extends Application {
         for (ArrayList<Point3D> trail : bodyTrails) {
             trail.clear();
         }
+
+        isPlaying = false;
+        pause();
 
         update3D(root3D);
         drawLeftPaneContent(contentPanel);
@@ -348,12 +440,12 @@ public class ThreeBodyApplication extends Application {
             tabColumn.getChildren().clear();
         }
 
-        Button[] tabs = new Button[5];
+        Button[] tabs = new Button[4];
         tabs[0] = new Button("General");
         tabs[1] = new Button("Bodies");
-        tabs[2] = new Button("Pre-sets");
-        tabs[3] = new Button("Settings");
-        tabs[4] = new Button("Slides");
+        //tabs[2] = new Button("Pre-sets");
+        tabs[2] = new Button("Settings");
+        tabs[3] = new Button("Slides");
 
         String tabStyle = "-fx-background-color: #884000; -fx-text-fill: #e0dad0; -fx-pref-width: 100; -fx-min-height: 50;-fx-font-size: 16px; -fx-font-family: 'Book Antiqua';";
         String activeTabStyle = "-fx-background-color: linear-gradient(to right, #ffcf57, #ff9c4f); -fx-text-fill: #140d07; -fx-pref-width: 100; -fx-min-height: 50; -fx-font-size: 16px; -fx-font-family:'Book Antiqua'; -fx-font-weight: bold;";
@@ -403,6 +495,14 @@ public class ThreeBodyApplication extends Application {
             drawLeftPaneContent(contentPanel);
         });
 
+        /*
+        tabs[2].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[2];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+        */
+
         tabs[2].setOnAction(e -> {
             controlPanelSetting = controlPanelSettings[2];
             drawLeftPanelTabs(tabColumn, contentPanel);
@@ -410,15 +510,7 @@ public class ThreeBodyApplication extends Application {
         });
 
         tabs[3].setOnAction(e -> {
-            controlPanelSetting = controlPanelSettings[3];
-            drawLeftPanelTabs(tabColumn, contentPanel);
-            drawLeftPaneContent(contentPanel);
-        });
-
-        tabs[4].setOnAction(e -> {
-            controlPanelSetting = controlPanelSettings[4];
-            drawLeftPanelTabs(tabColumn, contentPanel);
-            drawLeftPaneContent(contentPanel);
+            startSlideshow();
         });
     }
 
@@ -429,21 +521,11 @@ public class ThreeBodyApplication extends Application {
 
         switch (controlPanelSetting) {
             case "general":
-                Label title = new Label("Three-Body Problem");
-                title.setWrapText(true);
-                title.setStyle("-fx-text-fill: #e0dad0;");
-                title.setFont(Font.font("Book Antiqua", 36));
-
-                HBox centeredTitle = new HBox(title);
-                centeredTitle.setAlignment(Pos.CENTER);
-
-                contentPanel.getChildren().add(centeredTitle);
+                displayGeneralContent(contentPanel);
                 break;
 
             case "bodies":
                 displayBodiesContent(contentPanel);
-                break;
-            case "pre-sets":
                 break;
             case "settings":
                 displaySettingsContent(contentPanel);
@@ -451,6 +533,134 @@ public class ThreeBodyApplication extends Application {
             case "slides":
                 break;
         }
+    }
+
+    private void displayGeneralContent(VBox contentPanel) {
+        if (!contentPanel.getChildren().isEmpty()) {
+            contentPanel.getChildren().clear();
+        }
+
+        Label title = new Label("Three-Body Problem");
+        title.setWrapText(true);
+        title.setStyle("-fx-text-fill: #e0dad0;");
+        title.setFont(Font.font("Book Antiqua", 36));
+
+        HBox centeredTitle = new HBox(title);
+        centeredTitle.setAlignment(Pos.CENTER);
+
+        contentPanel.getChildren().add(centeredTitle);
+
+        Separator separator = new Separator(Orientation.HORIZONTAL);
+        separator.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator);
+
+        Label tabsLabel = new Label("On Tabs:");
+        tabsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        tabsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(tabsLabel);
+
+        VBox tabsList = new VBox(5);
+
+        for (String item : new String[]{
+                "The general tab contains directions on how stuff works",
+                "The bodies tab contains the information of each moving body is located and can be changed while the simulation is not playing",
+                "The settings tab contains all other settings, such as integration method and plane visibility",
+                "The slides tab contains the slides for the presentation, some background information on the three-body problem, and what I learned from this project"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            tabsList.getChildren().add(bulletItem);
+        }
+        contentPanel.getChildren().addAll(tabsList);
+
+        Separator separator2 = new Separator(Orientation.HORIZONTAL);
+        separator2.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator2);
+
+        Label buttonsLabel = new Label("On Buttons:");
+        buttonsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        buttonsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(buttonsLabel);
+
+        VBox buttonsList = new VBox(5);
+
+        for (String item : new String[]{
+                "The blue buttons are for camera controls (being reset, drag, and pan",
+                "The purple button pauses the simulation and displays only the trails",
+                "The orange buttons control the simulation, there is the play/pause button and a reset button"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            buttonsList.getChildren().add(bulletItem);
+        }
+
+        contentPanel.getChildren().add(buttonsList);
+
+        Separator separator3 = new Separator(Orientation.HORIZONTAL);
+        separator3.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator3);
+
+        Label unitsLabel = new Label("On Units:");
+        unitsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        unitsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(unitsLabel);
+
+        Label unitsInfo = new Label("All units are SI, which means the timestep is measured in seconds (s), the mass in kilograms (kg), and position, velocity, and acceleration in meters (m), meters per second (m/s), and meters per second squared (m/s^2), respectively");
+        unitsInfo.setWrapText(true);
+        unitsInfo.setFont(Font.font("Book Antiqua", 18));
+        unitsInfo.setStyle("-fx-text-fill: #e0dad0;");
+
+        contentPanel.getChildren().add(unitsInfo);
+
+        Separator separator4 = new Separator(Orientation.HORIZONTAL);
+        separator4.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator4);
+
+        Label slidesLabel = new Label("On Slides:");
+        slidesLabel.setFont(Font.font("Book Antiqua", 24));
+        slidesLabel.setWrapText(true);
+        slidesLabel.setStyle("-fx-text-fill: #e0dad0;");
+        contentPanel.getChildren().add(slidesLabel);
+
+        VBox slidesList = new VBox(5);
+
+        for (String item : new String[]{
+                "Escape to go back to the simulation",
+                "Left and right arrow keys to control the slide itself"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            slidesList.getChildren().add(bulletItem);
+        }
+
+        contentPanel.getChildren().add(slidesList);
     }
 
     private void displaySettingsContent(VBox contentPanel) {
