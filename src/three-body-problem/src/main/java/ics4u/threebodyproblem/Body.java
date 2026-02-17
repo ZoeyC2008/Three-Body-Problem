@@ -34,24 +34,6 @@ public class Body {
         this.mass = 5.97e24;
     }
 
-    public Body(double mass, Vector3D position) {
-        this.mass = mass;
-        this.position = new Vector3D(position);
-        this.velocity = new Vector3D(0, 0, 0);
-        this.acceleration = new Vector3D(0, 0, 0);
-        this.radius = 20;
-
-    }
-
-    public Body(double mass, Vector3D position, Vector3D velocity, Vector3D acceleration) {
-        this.mass = mass;
-        this.position = new Vector3D(position);
-        this.velocity = new Vector3D(velocity);
-        this.acceleration = new Vector3D(0, 0, 0);
-        this.radius = 20;
-
-    }
-
     public Body (Body body){
         this.mass = body.getMass();
         this.radius = body.getRadius();
@@ -64,6 +46,8 @@ public class Body {
     }
 
     public static void integrate (ArrayList<Body> bodies){
+        if (bodies.isEmpty()){return;}
+
         Body[] bodiesArray = new Body[bodies.size()];
         for (int i = 0; i < bodies.size(); i++) {
             bodiesArray[i] = bodies.get(i);
@@ -75,8 +59,15 @@ public class Body {
         switch (Body.integrationMethod) {
             case "Runge-Kutta 4":
                 //tragically need to work on this later
+                for (int i = 0; i < bodies.length; i++) {
+                    bodies[i].updateAcceleration(bodies);
+                }
+
+                rk4Integration(bodies);
+                break;
             case "Leapfrog":
                 //leapfrogIntegration(bodies);
+                //basically finding acceleration and then integrating for positon and then findaing acceleration before velocity
                 for (int i = 0; i < bodies.length; i++) {
                     bodies[i].updateAcceleration(bodies);
                 }
@@ -91,8 +82,21 @@ public class Body {
                 leapfrogUpdateVelocity(bodies);
                 break;
             case "Euler":
+                //euler uses the same methods as leapfrog, it just does it worse, which is why I'm using the same functions in a slightlhy different order, where I integrate for velcocity and then integrate for acceleration
+                for (int i = 0; i < bodies.length; i++) {
+                    bodies[i].cacheAcceleration();
+                    bodies[i].updateAcceleration(bodies);
+                }
+
+                leapfrogUpdateVelocity(bodies);
+                leapfrogUpdatePosition(bodies);
+
+                break;
             default:
         }
+    }
+
+    private static void rk4Integration (Body[] bodies){
     }
 
     //integration methods that i'm using in the static one

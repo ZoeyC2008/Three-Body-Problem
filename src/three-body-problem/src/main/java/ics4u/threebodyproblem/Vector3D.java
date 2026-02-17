@@ -84,4 +84,17 @@ public class Vector3D {
     public String toString() {
         return "XValue: " + this.getXValue() + " | YValue: " + this.getYValue() + " | ZValue: " + this.getZValue() + "\n";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Vector3D)) {return false;}
+
+        Vector3D vector = (Vector3D) obj;
+
+        if (vector.getXValue() == this.getXValue() && vector.getYValue() == this.getYValue() && vector.getZValue() == this.getZValue()) {
+            return true;
+        }
+
+        return false;
+    }
 }
