@@ -27,8 +27,8 @@ import java.util.Objects;
 
 public class ThreeBodyApplication extends Application {
     int scale = 100;
-    int frameLength = 1250;
-    int frameWidth = 750;
+    int frameLength = 1280;
+    int frameWidth = 720;
 
     double gridSize = 700;
     double spacing = 50;
@@ -60,7 +60,7 @@ public class ThreeBodyApplication extends Application {
 
     //control panel settings
     private String controlPanelSetting = "general";
-    private String[] controlPanelSettings = {"general", "bodies", "pre-sets", "settings", "slides"};
+    private String[] controlPanelSettings = {"general", "bodies", "settings", "slides"};
 
     //it's so bodies time
     private ArrayList<Body> bodies = new ArrayList<Body>();
@@ -232,6 +232,9 @@ public class ThreeBodyApplication extends Application {
             trail.clear();
         }
 
+        isPlaying = false;
+        pause();
+
         update3D(root3D);
         drawLeftPaneContent(contentPanel);
     }
@@ -348,12 +351,12 @@ public class ThreeBodyApplication extends Application {
             tabColumn.getChildren().clear();
         }
 
-        Button[] tabs = new Button[5];
+        Button[] tabs = new Button[4];
         tabs[0] = new Button("General");
         tabs[1] = new Button("Bodies");
-        tabs[2] = new Button("Pre-sets");
-        tabs[3] = new Button("Settings");
-        tabs[4] = new Button("Slides");
+        //tabs[2] = new Button("Pre-sets");
+        tabs[2] = new Button("Settings");
+        tabs[3] = new Button("Slides");
 
         String tabStyle = "-fx-background-color: #884000; -fx-text-fill: #e0dad0; -fx-pref-width: 100; -fx-min-height: 50;-fx-font-size: 16px; -fx-font-family: 'Book Antiqua';";
         String activeTabStyle = "-fx-background-color: linear-gradient(to right, #ffcf57, #ff9c4f); -fx-text-fill: #140d07; -fx-pref-width: 100; -fx-min-height: 50; -fx-font-size: 16px; -fx-font-family:'Book Antiqua'; -fx-font-weight: bold;";
@@ -403,6 +406,14 @@ public class ThreeBodyApplication extends Application {
             drawLeftPaneContent(contentPanel);
         });
 
+        /*
+        tabs[2].setOnAction(e -> {
+            controlPanelSetting = controlPanelSettings[2];
+            drawLeftPanelTabs(tabColumn, contentPanel);
+            drawLeftPaneContent(contentPanel);
+        });
+        */
+
         tabs[2].setOnAction(e -> {
             controlPanelSetting = controlPanelSettings[2];
             drawLeftPanelTabs(tabColumn, contentPanel);
@@ -411,12 +422,6 @@ public class ThreeBodyApplication extends Application {
 
         tabs[3].setOnAction(e -> {
             controlPanelSetting = controlPanelSettings[3];
-            drawLeftPanelTabs(tabColumn, contentPanel);
-            drawLeftPaneContent(contentPanel);
-        });
-
-        tabs[4].setOnAction(e -> {
-            controlPanelSetting = controlPanelSettings[4];
             drawLeftPanelTabs(tabColumn, contentPanel);
             drawLeftPaneContent(contentPanel);
         });
@@ -429,21 +434,11 @@ public class ThreeBodyApplication extends Application {
 
         switch (controlPanelSetting) {
             case "general":
-                Label title = new Label("Three-Body Problem");
-                title.setWrapText(true);
-                title.setStyle("-fx-text-fill: #e0dad0;");
-                title.setFont(Font.font("Book Antiqua", 36));
-
-                HBox centeredTitle = new HBox(title);
-                centeredTitle.setAlignment(Pos.CENTER);
-
-                contentPanel.getChildren().add(centeredTitle);
+                displayGeneralContent(contentPanel);
                 break;
 
             case "bodies":
                 displayBodiesContent(contentPanel);
-                break;
-            case "pre-sets":
                 break;
             case "settings":
                 displaySettingsContent(contentPanel);
@@ -451,6 +446,102 @@ public class ThreeBodyApplication extends Application {
             case "slides":
                 break;
         }
+    }
+
+    private void displayGeneralContent(VBox contentPanel) {
+        if (!contentPanel.getChildren().isEmpty()) {
+            contentPanel.getChildren().clear();
+        }
+
+        Label title = new Label("Three-Body Problem");
+        title.setWrapText(true);
+        title.setStyle("-fx-text-fill: #e0dad0;");
+        title.setFont(Font.font("Book Antiqua", 36));
+
+        HBox centeredTitle = new HBox(title);
+        centeredTitle.setAlignment(Pos.CENTER);
+
+        contentPanel.getChildren().add(centeredTitle);
+
+        Separator separator = new Separator(Orientation.HORIZONTAL);
+        separator.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator);
+
+        Label tabsLabel = new Label("On Tabs:");
+        tabsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        tabsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(tabsLabel);
+
+        VBox tabsList = new VBox(5);
+
+        for (String item : new String[]{
+                "The general tab contains directions on how stuff works",
+                "The bodies tab contains the information of each moving body is located and can be changed while the simulation is not playing",
+                "The settings tab contains all other settings, such as integration method and plane visibility",
+                "The slides tab contains the slides for the presentation, some background information on the three-body problem, and what I learned from this project"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            tabsList.getChildren().add(bulletItem);
+        }
+        contentPanel.getChildren().addAll(tabsList);
+
+        Separator separator2 = new Separator(Orientation.HORIZONTAL);
+        separator2.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator2);
+
+        Label buttonsLabel = new Label("On Buttons:");
+        buttonsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        buttonsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(buttonsLabel);
+
+        VBox buttonsList = new VBox(5);
+
+        for (String item : new String[]{
+                "The blue buttons are for camera controls (being reset, drag, and pan",
+                "The purple button pauses the simulation and displays only the trails",
+                "The orange buttons control the simulation, there is the play/pause button and a reset button"
+        }) {
+            HBox bulletItem = new HBox(5);
+
+            Label bullet = new Label("•");
+            bullet.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+
+            Label text = new Label(item);
+            text.setStyle("-fx-text-fill: #e0dad0; -fx-font-size: 18px; -fx-font-family: 'Book Antiqua';");
+            text.setWrapText(true);
+            text.setMaxWidth(200);
+
+            bulletItem.getChildren().addAll(bullet, text);
+            buttonsList.getChildren().add(bulletItem);
+        }
+
+        contentPanel.getChildren().add(buttonsList);
+
+        Separator separator3 = new Separator(Orientation.HORIZONTAL);
+        separator3.setStyle("-fx-background-color: #e0dad0;");
+        contentPanel.getChildren().add(separator3);
+
+        Label unitsLabel = new Label("On Units:");
+        unitsLabel.setStyle("-fx-text-fill: #e0dad0;");
+        unitsLabel.setFont(Font.font("Book Antiqua", 24));
+        contentPanel.getChildren().add(unitsLabel);
+
+        Label unitsInfo = new Label("All units are SI, which means the timestep is measured in seconds (s), the mass in kilograms (kg), and position, velocity, and acceleration in meters (m), meters per second (m/s), and meters per second squared (m/s^2), respectively");
+        unitsInfo.setWrapText(true);
+        unitsInfo.setFont(Font.font("Book Antiqua", 18));
+        unitsInfo.setStyle("-fx-text-fill: #e0dad0;");
+
+        contentPanel.getChildren().add(unitsInfo);
     }
 
     private void displaySettingsContent(VBox contentPanel) {
