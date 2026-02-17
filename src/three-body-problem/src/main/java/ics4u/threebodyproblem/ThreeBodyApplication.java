@@ -2,14 +2,11 @@ package ics4u.threebodyproblem;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.event.Event;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point3D;
 import javafx.geometry.Pos;
 import javafx.scene.*;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.scene.transform.*;
 import javafx.scene.image.*;
 import javafx.scene.input.*;
@@ -20,20 +17,26 @@ import javafx.scene.control.*;
 
 import javafx.stage.Stage;
 
-import javax.swing.text.IconView;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class ThreeBodyApplication extends Application {
-    int scale = 100;
+    //frame
     int frameLength = 1280;
     int frameWidth = 720;
 
+    //the various things that contain content
+    private Group root3D;
+    private VBox contentPanel;
+    private VBox rightControls;
+
+    //for drawing grid planes
     double gridSize = 700;
     double spacing = 50;
     double lineThickness = 2;
 
+    //camera variables (for resetting to default and it's general position)
+    //defaults
     PerspectiveCamera perspectiveCamera = new PerspectiveCamera(true);
     final double CAMERA_DEFAULT_TRANSLATION_X = 1535;
     final double CAMERA_DEFAULT_TRANSLATION_Y = -685;
@@ -41,40 +44,38 @@ public class ThreeBodyApplication extends Application {
     final double CAMERA_DEFAULT_ROTATION_X = -49.9;
     final double CAMERA_DEFAULT_ROTATION_Y = -60.4564;
     final double CAMERA_DEFAULT_ROTATION_Z = -40.7;
-
+    //actual positions (but rotations are always reset to zero)
     double cameraTranslationX = 1535;
     double cameraTranslationY = -685;
     double cameraTranslationZ = -675;
     double cameraRotationX = 0;
     double cameraRotationY = 0;
-
-    boolean planeXYVisible = true, planeXZVisible = true, planeYZVisible = true;
-    boolean trailsVisible = true;
-
     //camera modes
     private String cameraMode = "none";
     private String[] cameraModes = {"none", "pan", "drag"};
-
+    //needed for the scroll input
     double mouseX;
     double mouseY;
+
+    //visibility variables
+    boolean planeXYVisible = true, planeXZVisible = true, planeYZVisible = true;
+    boolean trailsVisible = true;
 
     //control panel settings
     private String controlPanelSetting = "general";
     private String[] controlPanelSettings = {"general", "bodies", "settings", "slides"};
 
-    //it's so bodies time
+    //it's bodies time
     private ArrayList<Body> bodies = new ArrayList<Body>();
     private final Color[] BODY_DEFAULT_COLOURS = {Color.web("#d55e5c"), Color.web("#5c7fd6"), Color.web("#6fcf97"), Color.web("#d68a4c"), Color.web("#8b6fd6"), Color.web("d6c35c"), Color.web("c86bbe"), Color.web("4fbfd8"), Color.web("#b8734f")};
     private boolean isPlaying = false;
 
-    private Group root3D;
-    private VBox contentPanel;
-
+    //for animation
     private AnimationTimer simulationTimer;
     private long lastUpdate = 0;
     private double timeScale = 1.0;
 
-    //refactoring some stuff so that i can update values on the left panel
+    //some stuff so that i can update values on the left panel
     private ArrayList<TextField> positionXFields = new ArrayList<>();
     private ArrayList<TextField> positionYFields = new ArrayList<>();
     private ArrayList<TextField> positionZFields = new ArrayList<>();
@@ -85,10 +86,12 @@ public class ThreeBodyApplication extends Application {
     private ArrayList<TextField> accelerationYFields = new ArrayList<>();
     private ArrayList<TextField> accelerationZFields = new ArrayList<>();
 
+    //trails stuff
     private ArrayList<ArrayList<Point3D>> bodyTrails = new ArrayList<>();
-    private double displayScale = 150.0 / 1.496e11;
     private boolean trailsMode = false;
+    private double displayScale = 150.0 / 1.496e11;
 
+    //keepign track of an initial state
     private SimulationState initialState = new SimulationState();
 
     //for slideshow
@@ -246,16 +249,20 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void loadSlideImages() {
-        slideImages = new Image[8];
+        slideImages = new Image[11];
 
-        slideImages[0] = new Image(getClass().getResourceAsStream("/slides/slide1.png"));
-        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/slide2.png"));
-        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/slide3.png"));
-        slideImages[3] = new Image(getClass().getResourceAsStream("/slides/slide4.png"));
-        slideImages[4] = new Image(getClass().getResourceAsStream("/slides/slide5.png"));
-        slideImages[5] = new Image(getClass().getResourceAsStream("/slides/slide6.png"));
-        slideImages[6] = new Image(getClass().getResourceAsStream("/slides/slide7.png"));
-        slideImages[7] = new Image(getClass().getResourceAsStream("/slides/slide8.png"));
+        slideImages[0] = new Image(getClass().getResourceAsStream("/slides/1.png"));
+        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/2.png"));
+        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/3.png"));
+        slideImages[3] = new Image(getClass().getResourceAsStream("/slides/4.png"));
+        slideImages[4] = new Image(getClass().getResourceAsStream("/slides/5.png"));
+        slideImages[5] = new Image(getClass().getResourceAsStream("/slides/6.png"));
+        slideImages[6] = new Image(getClass().getResourceAsStream("/slides/7.png"));
+        slideImages[7] = new Image(getClass().getResourceAsStream("/slides/8.png"));
+        slideImages[8] = new Image(getClass().getResourceAsStream("/slides/9.png"));
+        slideImages[9] = new Image(getClass().getResourceAsStream("/slides/10.png"));
+        slideImages[10] = new Image(getClass().getResourceAsStream("/slides/11.png"));
+
     }
 
     private void setupSimulationLoop() {
@@ -292,6 +299,10 @@ public class ThreeBodyApplication extends Application {
     }
 
     private void play() {
+        for (Body body : bodies){
+
+        }
+
         for (ArrayList<Point3D> trail : bodyTrails) {
             trail.clear();
         }
@@ -326,6 +337,7 @@ public class ThreeBodyApplication extends Application {
 
         update3D(root3D);
         drawLeftPaneContent(contentPanel);
+        drawRightControls(rightControls);
     }
 
     private void trailsButton(Group root) {
@@ -381,7 +393,7 @@ public class ThreeBodyApplication extends Application {
         border.setLeft(drawLeftPane());
         //border.setPickOnBounds(true);
 
-        VBox rightControls = new VBox(10);
+        rightControls = new VBox(10);
         rightControls.setPickOnBounds(false);
         drawRightControls(rightControls);
 
@@ -565,6 +577,7 @@ public class ThreeBodyApplication extends Application {
                 "The general tab contains directions on how stuff works",
                 "The bodies tab contains the information of each moving body is located and can be changed while the simulation is not playing",
                 "The settings tab contains all other settings, such as integration method and plane visibility",
+                "Importantly, Runge-Kutta 4 Integration has not been implemented, so the simulation will not move on that integration setting",
                 "The slides tab contains the slides for the presentation, some background information on the three-body problem, and what I learned from this project"
         }) {
             HBox bulletItem = new HBox(5);
@@ -1351,11 +1364,7 @@ public class ThreeBodyApplication extends Application {
         dragButton.setGraphic(dragIcon);
         //on hover animations
         dragButton.setOnMouseEntered(e -> {
-            if (this.cameraMode.equals("drag")) {
-                dragIcon.setImage(images[3]);  // stay clicked if active
-            } else {
-                dragIcon.setImage(images[2]);  // unclicked if inactive
-            }
+            dragIcon.setImage(images[2]);
         });
         dragButton.setOnMouseExited(e -> {
             if (this.cameraMode.equals("drag")) {
@@ -1390,17 +1399,13 @@ public class ThreeBodyApplication extends Application {
         panButton.setStyle("-fx-background-color: transparent;");
         panButton.setGraphic(panIcon);
         panButton.setOnMouseEntered(e -> {
-            if (this.cameraMode.equals("pan")) {
-                panIcon.setImage(images[5]);  // stay clicked if active
-            } else {
-                panIcon.setImage(images[4]);  // unclicked if inactive
-            }
+            panIcon.setImage(images[4]);
         });
         panButton.setOnMouseExited(e -> {
             if (this.cameraMode.equals("pan")) {
-                panIcon.setImage(images[4]);  // stay clicked if active
+                panIcon.setImage(images[4]);
             } else {
-                panIcon.setImage(images[5]);  // unclicked if inactive
+                panIcon.setImage(images[5]);
             }
         });
         panButton.setOnAction(e -> {
