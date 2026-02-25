@@ -252,8 +252,8 @@ public class ThreeBodyApplication extends Application {
         slideImages = new Image[11];
 
         slideImages[0] = new Image(getClass().getResourceAsStream("/slides/1.png"));
-        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/2.png"));
-        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/3.png"));
+        slideImages[1] = new Image(getClass().getResourceAsStream("/slides/3.png"));
+        slideImages[2] = new Image(getClass().getResourceAsStream("/slides/2.png"));
         slideImages[3] = new Image(getClass().getResourceAsStream("/slides/4.png"));
         slideImages[4] = new Image(getClass().getResourceAsStream("/slides/5.png"));
         slideImages[5] = new Image(getClass().getResourceAsStream("/slides/6.png"));
